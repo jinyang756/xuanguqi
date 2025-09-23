@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>萤火幻方量化智能选股器</title>
+    <title>皓月3.0量化智能选股器</title>
     <script src="https://cdn.tailwindcss.com/3.3.3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -196,28 +196,6 @@
         .title-hidden {
             opacity: 0;
             pointer-events: none;
-        }
-        
-        .license-info {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: var(--secondary-color);
-            font-size: 0.8rem;
-            z-index: 100;
-            max-width: 50%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        /* 许可证信息响应式优化 */
-        @media (max-width: 768px) {
-            .license-info {
-                font-size: 0.7rem;
-                right: 5px;
-                top: 5px;
-            }
         }
         
         .glass-effect {
@@ -588,6 +566,42 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* 股票代码高亮动画 */
+        .stock-code-highlight {
+            animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+                transform: scale(1);
+            }
+            50% {
+                text-shadow: 0 0 25px rgba(0, 240, 255, 1), 0 0 40px rgba(0, 240, 255, 0.5);
+                transform: scale(1.02);
+            }
+        }
+        
+        /* 元素淡入上移动画 */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 选股结果卡片动画 */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
         /* 加载指示器样式 */
         .loading-indicator {
             display: none;
@@ -598,7 +612,163 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
+        }
+        
+        /* 选股结果卡片样式 */
+        .stock-result-card {
+            animation: slideIn 0.6s ease-out forwards;
+            margin-top: 20px;
+        }
+        
+        /* 卡片头部样式 */
+        .card-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 卡片内容样式 */
+        .card-content {
+            padding: 20px;
+        }
+        
+        /* 数据概览区域 */
+        .data-overview h4 {
+            margin-bottom: 15px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            color: var(--primary-color);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+        }
+        
+        /* 指标网格样式 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        
+        /* 指标项样式 */
+        .metric-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .metric-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        /* 策略分析区域 */
+        .strategy-section h4 {
+            margin-bottom: 15px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            color: var(--secondary-color);
+            text-shadow: 0 0 8px rgba(5, 255, 161, 0.3);
+        }
+        
+        /* 策略卡片样式 */
+        .strategy-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .strategy-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        /* 策略因子样式 */
+        .strategy-factor {
+            margin-bottom: 15px;
+        }
+        
+        .strategy-factor:last-child {
+            margin-bottom: 0;
+        }
+        
+        .factor-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .factor-icon {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .factor-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .strategy-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-left: 14px;
+            line-height: 1.5;
+        }
+        
+        /* 投资建议区域 */
+        .investment-advice h4 {
+            margin-bottom: 15px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            color: var(--accent-color);
+            text-shadow: 0 0 8px rgba(255, 42, 109, 0.3);
+        }
+        
+        /* 建议卡片样式 */
+        .advice-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 建议项样式 */
+        .advice-item {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .advice-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .advice-icon {
+            color: var(--primary-color);
+            margin-right: 8px;
+        }
+        
+        /* 风险提示样式 */
+        .risk-warning {
             margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
         
         .loading-text {
@@ -864,23 +1034,7 @@
         </div>
     </div>
 
-    <!-- 卡密验证弹窗 -->
-    <div id="license-modal" class="modal hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="modal-content bg-gray-900 border border-cyan-500 rounded-lg p-8 max-w-md w-full">
-            <h2 class="text-2xl font-bold text-center text-cyan-400 mb-6">激活高级功能</h2>
-            <p class="text-gray-300 mb-4">请输入有效的卡密以解除选股限制</p>
-            <input type="text" id="license-key" class="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="请输入卡密">
-            <div class="flex gap-4">
-                <button id="activate-btn" class="flex-1 bg-gradient-to-r from-cyan-500 to-green-500 text-white font-bold py-2 px-4 rounded-md hover:opacity-90 transition-opacity">
-                    激活
-                </button>
-                <button id="cancel-activate-btn" class="flex-1 bg-gray-700 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors">
-                    取消
-                </button>
-            </div>
-            <p id="license-message" class="mt-4 text-center text-sm text-red-500 hidden"></p>
-        </div>
-    </div>
+
 
     <!-- 主按钮容器，用于放置按钮和粒子流Canvas -->
     <div class="btn-container">
@@ -1092,10 +1246,8 @@
         function startSelection() {
             if (animationState !== 'idle') return;
             
-            // 检查是否是新用户首次选股
             const hasSelectedBefore = localStorage.getItem('hasSelectedBefore') === 'true';
             
-            // 新用户首次选股无需卡密
             if (!hasSelectedBefore) {
                 // 标记用户已选股
                 localStorage.setItem('hasSelectedBefore', 'true');
@@ -1172,14 +1324,8 @@
                 return;
             }
             
-            // 检查是否已激活
-            const isActivated = localStorage.getItem('isActivated') === 'true';
+            // 管理员用户不受任何限制
             const isAdmin = localStorage.getItem('isAdmin') === 'true';
-            const activationDate = localStorage.getItem('activationDate');
-            const activatedIp = localStorage.getItem('activatedIp');
-            
-            // 获取当前IP（模拟，实际环境中应使用真实IP）
-            const currentIp = getClientIp();
             
             // 管理员用户不受任何限制
             if (isAdmin) {
@@ -1255,12 +1401,7 @@
               return;
             }
             
-            // 非管理员用户需要验证激活状态
-            if (!isActivated || activatedIp !== currentIp) {
-                // 显示卡密验证弹窗
-                document.getElementById('license-modal').classList.remove('hidden');
-                return;
-            }
+
             
             // 确保股票数据已加载
             if (!stockDataCollection.length) {
@@ -1808,6 +1949,13 @@
             const resultContainer = document.getElementById('result-container');
             resultContainer.style.display = 'block';
             
+            // 添加显示动画
+            resultContainer.style.opacity = '0';
+            setTimeout(() => {
+                resultContainer.style.opacity = '1';
+                resultContainer.style.transition = 'opacity 0.6s ease-out';
+            }, 100);
+            
             // 播放结果音效
             if (soundEnabled) {
                 playResultSound();
@@ -1818,78 +1966,157 @@
                 resultContainer.removeChild(resultContainer.children[2]);
             }
             
-            // 创建选股结果卡片
-            const resultCard = document.createElement('div');
-            resultCard.className = 'bg-white/10 backdrop-blur-md p-4 rounded-lg shadow-xl w-full max-w-xl mx-auto';
-            resultContainer.appendChild(resultCard);
+            // 股票代码动态更新和动画
+            const selectedStockElement = document.getElementById('selected-stock');
+            selectedStockElement.textContent = stock.code;
+            selectedStockElement.classList.add('stock-code-highlight');
             
-            // 股票代码和名称
-            const stockHeader = document.createElement('div');
-            stockHeader.className = 'text-2xl font-bold mb-4 border-b border-white/20 pb-2';
-            stockHeader.textContent = `${stock.code} ${stock.name}`;
-            resultCard.appendChild(stockHeader);
+            // 清除股票信息容器
+            const stockInfoElement = resultContainer.querySelector('.stock-info');
+            stockInfoElement.innerHTML = '';
             
-            // 个股板块
-            const industrySection = document.createElement('div');
-            industrySection.className = 'mb-4';
-            const displayIndustry = stock.industry && stock.industry !== '未知' ? stock.industry : '金融科技'; // 如果行业是未知，显示默认行业
-            industrySection.innerHTML = `
-                <div class="text-sm opacity-80">个股板块</div>
-                <div class="text-lg mt-1">${displayIndustry}</div>
-            `;
-            resultCard.appendChild(industrySection);
-            
-            // 股票基本数据
-            const basicDataSection = document.createElement('div');
-            basicDataSection.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 mb-6';
-            
+            // 动态添加基本指标到stock-info
             const changeClass = stock.priceChange >= 0 ? 'price-up' : 'price-down';
             const changeSign = stock.priceChange >= 0 ? '+' : '';
             
-            addStockMetric(basicDataSection, `${changeSign}${stock.priceChange.toFixed(2)}%`, changeClass);
-            addStockMetric(basicDataSection, `价格: ¥${stock.price.toFixed(2)}`);
-            addStockMetric(basicDataSection, `PE: ${stock.pe.toFixed(1)}`);
-            addStockMetric(basicDataSection, `ROE: ${stock.roe.toFixed(1)}%`);
+            // 先显示核心指标
+            setTimeout(() => {
+                addStockMetric(stockInfoElement, `${changeSign}${stock.priceChange.toFixed(2)}%`, changeClass);
+                setTimeout(() => {
+                    addStockMetric(stockInfoElement, `¥${stock.price.toFixed(2)}`);
+                    setTimeout(() => {
+                        addStockMetric(stockInfoElement, `PE: ${stock.pe.toFixed(1)}`);
+                        setTimeout(() => {
+                            addStockMetric(stockInfoElement, `ROE: ${stock.roe.toFixed(1)}%`);
+                        }, 300);
+                    }, 300);
+                }, 300);
+            }, 500);
             
-            resultCard.appendChild(basicDataSection);
+            // 创建选股结果详情卡片
+            const resultCard = document.createElement('div');
+            resultCard.className = 'stock-result-card bg-white/10 backdrop-blur-md rounded-lg shadow-xl w-full max-w-3xl mx-auto p-0 overflow-hidden mt-4';
             
-            // 建仓逻辑（短期突破策略）
+            // 添加卡片标题栏
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header bg-gradient-to-r from-cyan-900/80 to-blue-900/80 p-4 text-white';
+            cardHeader.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">${stock.name} 详细分析</h3>
+                    <span class="text-sm px-2 py-1 rounded-full bg-white/20">
+                        ${stock.industry && stock.industry !== '未知' ? stock.industry : '金融科技'}
+                    </span>
+                </div>
+            `;
+            resultCard.appendChild(cardHeader);
+            
+            // 添加卡片内容
+            const cardContent = document.createElement('div');
+            cardContent.className = 'card-content p-5';
+            
+            // 添加数据概览区域
+            const dataOverviewSection = document.createElement('div');
+            dataOverviewSection.className = 'data-overview mb-6';
+            
+            // 构建详细指标网格
+            dataOverviewSection.innerHTML = `
+                <h4 class="text-lg font-semibold mb-3 text-[#00f0ff]">量化指标分析</h4>
+                <div class="metrics-grid grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">成交量</div>
+                        <div class="metric-value font-semibold">${(stock.volume / 10000).toFixed(2)}万</div>
+                    </div>
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">市值</div>
+                        <div class="metric-value font-semibold">${(stock.marketCap / 100000000).toFixed(2)}亿</div>
+                    </div>
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">换手率</div>
+                        <div class="metric-value font-semibold">${stock.turnoverRate.toFixed(2)}%</div>
+                    </div>
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">市净率</div>
+                        <div class="metric-value font-semibold">${stock.pb.toFixed(2)}</div>
+                    </div>
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">营收增长率</div>
+                        <div class="metric-value font-semibold">${stock.revenueGrowth.toFixed(2)}%</div>
+                    </div>
+                    <div class="metric-item bg-white/5 p-3 rounded-lg">
+                        <div class="metric-label text-sm text-white/70">净利润增长率</div>
+                        <div class="metric-value font-semibold">${stock.profitGrowth.toFixed(2)}%</div>
+                    </div>
+                </div>
+            `;
+            cardContent.appendChild(dataOverviewSection);
+            
+            // 添加策略分析区域
             const strategySection = document.createElement('div');
-            strategySection.className = 'mb-6';
+            strategySection.className = 'strategy-section mb-6';
             strategySection.innerHTML = `
-                <div class="text-lg font-semibold mb-2">建仓逻辑（短期突破策略）</div>
-                <div class="text-sm bg-white/5 p-4 rounded">
-                    <p class="mb-2"><span style="color: #00f0ff;">要素一：价格态势 - 爆发前夜</span></p>
-                    <p>• 过去10日平均真实波幅显著低于过去60日平均波幅的70%，表明波动收缩，蓄势待发</p>
-                    <p class="mt-2"><span style="color: #05ffa1;">要素二：动能确认 - 资金流入</span></p>
-                    <p>• 最近3-5个交易日平均成交量较前5-10个交易日显著放大，有资金悄然建仓</p>
-                    <p>• 股价已成功站上5日均线和10日均线，短期趋势转向多头</p>
-                    <p class="mt-2"><span style="color: #ff2a6d;">要素三：突破信号 - 总攻号角</span></p>
-                    <p>• 当日收盘价成功突破20日最高价的关键阻力位，且突破幅度超过1%</p>
-                    <p>• 当日成交量达到过去20个交易日平均成交量的2倍以上，量价配合完美</p>
+                <h4 class="text-lg font-semibold mb-3 text-[#05ffa1]">选股策略分析</h4>
+                <div class="strategy-card bg-white/5 p-4 rounded-lg">
+                    <div class="strategy-title font-semibold text-white mb-2">短期突破策略</div>
+                    
+                    <div class="strategy-factor mb-3">
+                        <div class="factor-header flex items-center mb-1">
+                            <div class="factor-icon w-2 h-2 rounded-full bg-[#00f0ff] mr-2"></div>
+                            <div class="factor-title font-semibold text-[#00f0ff]">价格态势 - 爆发前夜</div>
+                        </div>
+                        <p class="strategy-desc text-sm ml-4">过去10日平均真实波幅显著低于过去60日平均波幅的70%，表明波动收缩，蓄势待发</p>
+                    </div>
+                    
+                    <div class="strategy-factor mb-3">
+                        <div class="factor-header flex items-center mb-1">
+                            <div class="factor-icon w-2 h-2 rounded-full bg-[#05ffa1] mr-2"></div>
+                            <div class="factor-title font-semibold text-[#05ffa1]">动能确认 - 资金流入</div>
+                        </div>
+                        <p class="strategy-desc text-sm ml-4">最近3-5个交易日平均成交量较前5-10个交易日显著放大，有资金悄然建仓</p>
+                        <p class="strategy-desc text-sm ml-4">股价已成功站上5日均线和10日均线，短期趋势转向多头</p>
+                    </div>
+                    
+                    <div class="strategy-factor">
+                        <div class="factor-header flex items-center mb-1">
+                            <div class="factor-icon w-2 h-2 rounded-full bg-[#ff2a6d] mr-2"></div>
+                            <div class="factor-title font-semibold text-[#ff2a6d]">突破信号 - 总攻号角</div>
+                        </div>
+                        <p class="strategy-desc text-sm ml-4">当日收盘价成功突破20日最高价的关键阻力位，且突破幅度超过1%</p>
+                        <p class="strategy-desc text-sm ml-4">当日成交量达到过去20个交易日平均成交量的2倍以上，量价配合完美</p>
+                    </div>
                 </div>
             `;
-            resultCard.appendChild(strategySection);
+            cardContent.appendChild(strategySection);
             
-            // 近期利好因素（短期突破策略）
-            const positiveFactorsSection = document.createElement('div');
-            positiveFactorsSection.className = 'mb-6';
-            positiveFactorsSection.innerHTML = `
-                <div class="text-lg font-semibold mb-2">短期突破确认信号</div>
-                <div class="text-sm bg-white/5 p-4 rounded">
-                    <p>• <span style="color: #00f0ff;">突破强度</span>：突破关键阻力位幅度超过1.5%，显示强劲上行动能</p>
-                    <p>• <span style="color: #05ffa1;">量能配合</span>：成交量放大至20日均量2.5倍以上，主力资金大幅流入</p>
-                    <p>• <span style="color: #ff2a6d;">技术形态</span>：形成典型的"窄幅波动后突破"形态，胜率较高</p>
-                    <p>• <span style="color: #00f0ff;">风险控制</span>：建议在突破次日回踩支撑位时买入，设置3%止损位</p>
+            // 添加投资建议区域
+            const investmentAdviceSection = document.createElement('div');
+            investmentAdviceSection.className = 'investment-advice';
+            investmentAdviceSection.innerHTML = `
+                <h4 class="text-lg font-semibold mb-3 text-[#ff2a6d]">投资建议</h4>
+                <div class="advice-card bg-white/5 p-4 rounded-lg">
+                    <div class="advice-item mb-2">
+                        <span class="advice-icon mr-2">•</span>
+                        <span class="advice-text"><strong class="text-[#00f0ff]">买入时机：</strong>建议在突破次日回踩支撑位时买入，设置3%止损位</span>
+                    </div>
+                    <div class="advice-item mb-2">
+                        <span class="advice-icon mr-2">•</span>
+                        <span class="advice-text"><strong class="text-[#05ffa1]">仓位控制：</strong>建议初始仓位不超过总资金的10%，可分批建仓</span>
+                    </div>
+                    <div class="advice-item">
+                        <span class="advice-icon mr-2">•</span>
+                        <span class="advice-text"><strong class="text-[#ff2a6d]">止盈目标：</strong>第一止盈位可设在突破点位上方10%，第二止盈位20%</span>
+                    </div>
                 </div>
             `;
-            resultCard.appendChild(positiveFactorsSection);
+            cardContent.appendChild(investmentAdviceSection);
             
-            // 添加提示文本替代重新选股按钮
-            const selectionLimitText = document.createElement('div');
-            selectionLimitText.className = 'mt-4 text-sm text-white/60 italic';
-            selectionLimitText.textContent = '市场有风险，投资需谨慎';
-            resultCard.appendChild(selectionLimitText);
+            // 添加风险提示
+            const riskWarning = document.createElement('div');
+            riskWarning.className = 'risk-warning mt-5 text-xs text-white/60 italic';
+            riskWarning.textContent = '市场有风险，投资需谨慎。量化选股基于历史数据与专业模型算法，不构成投资建议。';
+            cardContent.appendChild(riskWarning);
+            
+            resultCard.appendChild(cardContent);
+            resultContainer.appendChild(resultCard);
             
             // 记录选股日期
             const today = new Date().toDateString();
@@ -2221,20 +2448,15 @@
             parent.appendChild(metricElement);
         }
 
-        // 重置选股流程 - 保留用于内部逻辑，用户界面不再提供重置按钮
+        // 重置选股流程
         function resetSelection() {
-            // 检查是否已激活
-            const isActivated = localStorage.getItem('isActivated') === 'true';
-            const activationDate = localStorage.getItem('activationDate');
-            const activatedIp = localStorage.getItem('activatedIp');
+            // 检查是否允许选股（每天限制一次）
+            const today = new Date().toDateString();
+            const lastSelectionDate = localStorage.getItem('lastSelectionDate');
             
-            // 获取当前IP
-            const currentIp = getClientIp();
-            
-            // 检查激活状态是否有效
-            if (!isActivated || activatedIp !== currentIp) {
-                // 显示卡密验证弹窗
-                document.getElementById('license-modal').classList.remove('hidden');
+            // 如果今天已经选过股，显示提示
+            if (lastSelectionDate === today) {
+                alert('每位用户每天只能使用一次选股功能，请明天再来！');
                 return;
             }
             
@@ -2273,141 +2495,8 @@
             scene.add(particlesSystem);
         }
         
-        // 获取客户端IP（模拟）
-        function getClientIp() {
-            // 在实际环境中，这里应该使用真实的IP获取方法
-            // 此处使用一个基于时间和随机数的模拟IP
-            const now = new Date().getTime();
-            const random = Math.floor(Math.random() * 1000);
-            const ipHash = (now + random).toString(16).substr(0, 8);
-            return `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}_${ipHash}`;
-        }
-        
-        // 验证卡密
-        function validateLicenseKey(key) {
-            // 去除空格并转换为小写
-            const normalizedKey = key.trim().toLowerCase();
-            
-            // 超级管理卡密
-            if (normalizedKey === 'admin') {
-                return { valid: true, isAdmin: true };
-            }
-            
-            // 验证普通卡密格式：lianghuatozi1 到 lianghuatozi100
-            const pattern = /^lianghuatozi(\d{1,3})$/;
-            const match = normalizedKey.match(pattern);
-            
-            if (match) {
-                const number = parseInt(match[1], 10);
-                // 检查数字范围
-                if (number >= 1 && number <= 100) {
-                    return { valid: true, isAdmin: false };
-                }
-            }
-            
-            return { valid: false, isAdmin: false };
-        }
-        
-        // 保存激活信息
-        function saveActivationInfo(isAdmin) {
-            const today = new Date().toDateString();
-            const currentIp = getClientIp();
-            
-            localStorage.setItem('isActivated', 'true');
-            localStorage.setItem('activationDate', today);
-            localStorage.setItem('activatedIp', currentIp);
-            localStorage.setItem('isAdmin', isAdmin.toString());
-        }
-        
-        // 显示许可证信息
-        function showLicenseInfo() {
-            const isActivated = localStorage.getItem('isActivated') === 'true';
-            const isAdmin = localStorage.getItem('isAdmin') === 'true';
-            const activationDate = localStorage.getItem('activationDate');
-            
-            // 如果未创建许可证信息元素，创建一个
-            let licenseInfoElement = document.querySelector('.license-info');
-            if (!licenseInfoElement) {
-                licenseInfoElement = document.createElement('div');
-                licenseInfoElement.className = 'license-info';
-                document.body.appendChild(licenseInfoElement);
-            }
-            
-            if (isActivated) {
-                const statusText = isAdmin ? '超级管理员' : '已激活';
-                licenseInfoElement.textContent = `${statusText} - 激活日期: ${activationDate}`;
-            } else {
-                licenseInfoElement.textContent = '未激活';
-            }
-        }
-        
-        // 卡密验证按钮事件
-        document.getElementById('activate-btn').addEventListener('click', function() {
-            const licenseKey = document.getElementById('license-key').value;
-            const licenseMessage = document.getElementById('license-message');
-            
-            const validation = validateLicenseKey(licenseKey);
-            
-            if (validation.valid) {
-                    // 保存激活信息
-                    saveActivationInfo(validation.isAdmin);
-                    
-                    // 显示成功消息
-                    licenseMessage.textContent = validation.isAdmin ? '超级管理员激活成功！您现在可以无限制使用所有功能。' : '激活成功！';
-                    licenseMessage.className = 'mt-4 text-center text-sm text-green-500';
-                    
-                    // 隐藏输入框和按钮，仅显示状态标签
-                    document.getElementById('license-key').style.display = 'none';
-                    document.getElementById('activate-btn').style.display = 'none';
-                    document.getElementById('cancel-activate-btn').style.display = 'none';
-                    
-                    // 延迟关闭弹窗
-                    setTimeout(() => {
-                        document.getElementById('license-modal').classList.add('hidden');
-                        
-                        // 对于超级管理员，彻底隐藏输入框和按钮
-                        if (validation.isAdmin) {
-                            document.getElementById('license-key').style.display = 'none';
-                            document.getElementById('activate-btn').style.display = 'none';
-                            document.getElementById('cancel-activate-btn').style.display = 'none';
-                            licenseMessage.style.display = 'none';
-                        } else {
-                            // 对于普通用户，恢复输入框和按钮的显示
-                            document.getElementById('license-key').style.display = 'block';
-                            document.getElementById('activate-btn').style.display = 'block';
-                            document.getElementById('cancel-activate-btn').style.display = 'block';
-                            licenseMessage.className = 'mt-4 text-center text-sm text-red-500 hidden';
-                        }
-                        
-                        // 显示许可证信息
-                        showLicenseInfo();
-                        
-                        // 如果是通过开始选股按钮触发的验证，则继续选股流程
-                        if (animationState === 'idle') {
-                            startSelection();
-                        }
-                    }, 1500);
-            } else {
-                // 显示错误消息
-                licenseMessage.textContent = '无效的卡密，请重新输入';
-                licenseMessage.className = 'mt-4 text-center text-sm text-red-500';
-            }
-        });
-        
-        // 取消激活按钮事件
-        document.getElementById('cancel-activate-btn').addEventListener('click', function() {
-            document.getElementById('license-modal').classList.add('hidden');
-            document.getElementById('license-message').className = 'mt-4 text-center text-sm text-red-500 hidden';
-        });
-        
         // 初始化音效设置
         let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
-        
-        // 初始化时检查激活状态
-        window.addEventListener('DOMContentLoaded', function() {
-            // 显示许可证信息
-            showLicenseInfo();
-        });
         
         // 播放音效
         function playSound(frequency, duration, volume = 0.3) {
@@ -2534,7 +2623,7 @@
                                 <li>用手机号注册并登录；</li>
                                 <li>两种进群方式：扫码进群 / 点击链接跳转：</li>
                                 <li><button class="join-group-btn bg-[#05ffa1] text-black font-bold py-2 px-4 rounded-md hover:bg-opacity-80 transition-all" onclick="window.open('https://applink.larksuite.com/client/chat/chatter/add_by_link?link_token=b0en0f42-377e-42a2-b77f-4a93f5805651', '_blank')">立即加入飞书群</button></li>
-                                <li>权益说明：新用户首次进群可免费体验「萤火 3.0 基础选股功能」，后续高级功能需在群内领取专属卡密解锁。</li>
+                                <li>权益说明：新用户首次进群可免费体验「皓月 3.0 基础选股功能」，后续高级功能会在群内提供。</li>
                             </ol>
                         </div>
                         
@@ -2615,7 +2704,7 @@
                     <div class="modal-body text-white">
                         <div class="mb-6">
                             <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">服务定位</h3>
-                            <p class="mb-3">「萤火 3.0」的高端隐藏模块，是日斗投资、幻方量化等联合机构共同打造的 "进阶工具包"，不对外公开功能详情，仅面向飞书群用户开放体验资格。</p>
+                            <p class="mb-3">皓月 3.0」的高端隐藏模块，是日斗投资、主观量化等联合机构共同打造的 "进阶工具包"，不对外公开功能详情，仅面向飞书群用户开放体验资格。</p>
                         </div>
                         
                         <div class="mb-6">
@@ -2713,7 +2802,7 @@
                             <div class="space-y-4">
 
                                 <div class="bg-white/5 p-4 rounded-lg italic">
-                                    <p>日斗投资 CEO："《第十届财富论坛》的核心策略资源已同步至飞书群，结合'萤火''皓月'工具，能为用户提供'策略 + 工具'的一站式服务。"</p>
+                                    <p>日斗投资 CEO："《第十届财富论坛》的核心策略资源已同步至飞书群，结合'皓月'工具，能为用户提供'策略 + 工具'的一站式服务。"</p>
                                 </div>
                             </div>
                         </div>
