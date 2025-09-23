@@ -35,6 +35,9 @@ Thumbs.db
 # 缓存目录
 .cache/
 
+# Vercel相关文件
+.vercel/
+
 # 构建输出
 build/
 dist/
@@ -57,3 +60,4 @@ venv/
 # 执行文件
 *.exe
 *.bat
+.vercel
