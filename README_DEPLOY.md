@@ -34,8 +34,9 @@ GitHub Actions工作流配置了**sparse-checkout**，只会检出必要的前�
 当代码推送到`main`分支时，GitHub Actions会自动：
 1. 检出项目的必要文件（使用sparse-checkout减少文件数量）
 2. 安装Vercel CLI
-3. 部署到Vercel预览环境（通过环境变量传递token）
-4. 部署到Vercel生产环境（通过环境变量传递token）
+3. 设置Vercel环境变量
+4. 部署到Vercel预览环境（使用命令行参数指定组织和项目）
+5. 部署到Vercel生产环境（使用命令行参数指定组织和项目）
 
 ## 4. 手动部署（可选）
 
@@ -43,11 +44,13 @@ GitHub Actions工作流配置了**sparse-checkout**，只会检出必要的前�
 
 ```bash
 # 部署到预览环境
-vercel --yes
+vercel --yes --token YOUR_VERCEL_TOKEN --org YOUR_VERCEL_ORG_ID --project YOUR_VERCEL_PROJECT_ID
 
 # 部署到生产环境
-vercel --prod --yes
+vercel --prod --yes --token YOUR_VERCEL_TOKEN --org YOUR_VERCEL_ORG_ID --project YOUR_VERCEL_PROJECT_ID
 ```
+
+请将命令中的`YOUR_VERCEL_TOKEN`、`YOUR_VERCEL_ORG_ID`和`YOUR_VERCEL_PROJECT_ID`替换为您实际的Vercel凭据。
 
 ## 5. 注意事项
 
@@ -57,18 +60,25 @@ vercel --prod --yes
 
 ## 6. 故障排除
 
-### 常见错误："--token"缺少值
+### 常见错误："您无权访问指定的帐户"或"--token"缺少值
 
-如果遇到类似错误：`错误：您定义了"--token"，但它缺少一个值`，请确保：
-1. 已正确在GitHub Secrets中配置了`VERCEL_TOKEN`
-2. 工作流已优化为通过环境变量传递token，不再在命令行中直接使用`--token`参数
+如果遇到类似错误，请确保：
+1. 已正确在GitHub Secrets中配置了`VERCEL_TOKEN`、`VERCEL_ORG_ID`和`VERCEL_PROJECT_ID`
+2. 确保token具有足够的权限访问指定的组织和项目
+3. 检查Vercel账户中是否确实存在该组织和项目
 
-### 环境变量配置
+### 权限问题
 
-工作流已配置为自动通过环境变量传递所有必要的Vercel配置：
-- VERCEL_TOKEN：Vercel API令牌
-- VERCEL_ORG_ID：Vercel组织ID
-- VERCEL_PROJECT_ID：Vercel项目ID
-- VERCEL_TELEMETRY_DISABLED：禁用遥测数据收集
+根据Vercel官方文档，如果遇到`scope-not-accessible`错误，通常是因为：
+- 提供的token没有足够的权限访问指定的组织或项目
+- 组织或项目ID不正确
+- token已过期或被撤销
 
-这种方式更可靠，可以避免命令行参数解析问题。
+### 工作流配置
+
+工作流已优化为：
+1. 通过环境变量设置`VERCEL_TOKEN`
+2. 在部署命令中使用`--org`和`--project`参数明确指定组织和项目
+3. 自动禁用遥测数据收集以避免相关问题
+
+这种配置方式可以解决大多数权限和参数解析问题。
