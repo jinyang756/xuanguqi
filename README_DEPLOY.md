@@ -34,8 +34,9 @@ GitHub Actions工作流配置了**sparse-checkout**，只会检出必要的前�
 当代码推送到`main`分支时，GitHub Actions会自动：
 1. 检出项目的必要文件（使用sparse-checkout减少文件数量）
 2. 安装Vercel CLI
-3. 部署到Vercel预览环境
-4. 部署到Vercel生产环境
+3. 设置Vercel环境变量（包括禁用遥测数据收集）
+4. 部署到Vercel预览环境
+5. 部署到Vercel生产环境
 
 ## 4. 手动部署（可选）
 
@@ -54,3 +55,21 @@ vercel --prod --yes
 - 确保您的Vercel账户有足够的部署配额
 - 如果遇到部署错误，请检查GitHub Actions的运行日志
 - 如需修改部署配置，可以编辑`.github/workflows/vercel-deploy.yml`文件
+
+## 6. 故障排除
+
+### 常见错误："--token"缺少值
+
+如果遇到类似错误：`错误：您定义了"--token"，但它缺少一个值`，请确保：
+1. 已正确在GitHub Secrets中配置了`VERCEL_TOKEN`
+2. GitHub Actions工作流文件中的token引用格式正确
+
+工作流文件已优化为使用`--token ${{ secrets.VERCEL_TOKEN }}`格式，避免令牌解析问题。
+
+### 遥测数据收集
+
+工作流已配置为自动禁用Vercel遥测数据收集，避免相关问题。如果需要手动禁用，可以设置环境变量：
+
+```bash
+VERCEL_TELEMETRY_DISABLED=1
+```
