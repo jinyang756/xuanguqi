@@ -32,8 +32,8 @@ jobs:
           echo "VERCEL_TELEMETRY_DISABLED=1" >> $GITHUB_ENV
       
       - name: Deploy to Vercel Preview
-        run: vercel --yes --project ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel --yes
       
       - name: Deploy to Vercel Production (on main branch)
         if: github.ref == 'refs/heads/main'
-        run: vercel --prod --yes --project ${{ secrets.VERCEL_PROJECT_ID }}
+        run: vercel --prod --yes
