@@ -4,6 +4,7 @@ import subprocess
 import webbrowser
 import time
 import sys
+import json
 from threading import Thread
 
 # 设置Windows编码
@@ -12,6 +13,30 @@ sys.stderr.reconfigure(encoding='utf-8')
 
 # 添加backend目录到Python路径
 sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+
+# 应用配置
+app_config = {
+    'useMockData': False,
+    'mockDataFile': 'stock_data_mock.json',
+    'debug': False
+}
+
+# 尝试从配置文件加载配置
+def load_config():
+    global app_config
+    config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+                app_config.update(config_data)
+                print(f"成功加载配置: {config_file}")
+        except Exception as e:
+            print(f"加载配置文件时出错: {e}")
+            print("使用默认配置")
+
+# 加载配置
+load_config()
 
 # 启动HTTP服务器的函数
 def start_http_server():
@@ -47,16 +72,20 @@ def start_http_server():
 def run_stock_selection():
     from backend.filtering.select_stock import main as run_stock_selector
     try:
-        print("=== 选股器启动 ===" 
+        print("=== 选股器启动 ===="
               "\n正在读取股票数据并执行选股逻辑...\n")
-        # 运行选股功能
-        run_stock_selector()
+        # 运行选股功能，传递配置
+        run_stock_selector(config=app_config)
         
-        print("\n=== 选股器运行完成 ===")
+        print("\n=== 选股器运行完成 ====")
         print("\n提示：")
         print("1. 选股结果基于短期上涨潜力分析")
-        print("2. 如果需要查看更多股票数据或自定义选股条件，请修改backend/select_stock.py文件")
-        print("3. 数据来源于data/processed目录下的JSON文件")
+        print("2. 如果需要查看更多股票数据或自定义选股条件，请修改backend/filtering/select_stock.py文件")
+        print("3. 当前数据源配置：")
+        print(f"   - 使用虚拟数据: {app_config.get('useMockData', False)}")
+        print(f"   - 虚拟数据文件: {app_config.get('mockDataFile', 'stock_data_mock.json')}")
+        print(f"   - 调试模式: {app_config.get('debug', False)}")
+        print("   - 如需切换数据源，请修改config.json文件中的useMockData和mockDataFile参数")
     except Exception as e:
         print(f"\n选股过程中发生错误: {str(e)}")
         print("请检查数据文件是否存在或格式是否正确")

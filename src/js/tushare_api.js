@@ -4,11 +4,36 @@
  * 优化版：支持高级选股器模块
  */
 
+// 引入应用配置
+let appConfig = {
+    dataSource: {
+        useMockData: true,
+        mockDataFile: 'data/processed/stock_data_strategy_test.json'
+    },
+    debug: {
+        enabled: false
+    }
+};
+
+// 尝试加载外部配置文件
+try {
+    // 如果在浏览器环境中，并且支持动态导入
+    if (typeof window !== 'undefined' && window.appConfig) {
+        appConfig = window.appConfig;
+    }
+} catch (error) {
+    console.warn('加载外部配置文件失败，使用默认配置:', error);
+}
+
 class TushareAPI {
     constructor() {
         // API基础配置
         this.baseUrl = ''; // 未来可以配置为后端API地址
-        this.isDebug = false;
+        this.isDebug = appConfig.debug.enabled || false;
+        
+        // 数据来源配置
+        this.useMockData = appConfig.dataSource.useMockData || true;
+        this.mockDataFile = appConfig.dataSource.mockDataFile || 'data/processed/stock_data_strategy_test.json';
         
         // 缓存机制优化
         this.cacheTimeout = 15 * 60 * 1000; // 缓存15分钟
@@ -164,7 +189,7 @@ class TushareAPI {
     
     /**
      * 从JSON文件加载股票数据
-     * 优化版：添加数据清洗和错误重试
+     * 优化版：添加数据清洗和错误重试，支持虚拟数据切换
      * @returns {Promise<Array>} 清理后的股票数据数组
      */
     async loadStockDataFromJSON() {
@@ -173,10 +198,19 @@ class TushareAPI {
         
         while (retryCount < maxRetries) {
             try {
-                // 动态获取数据路径（假设脚本在src目录，数据在src同级的data目录）
-                const basePath = window.location.pathname.includes('src')
-                    ? '../data/processed/stock_data.json'
+                // 确定要加载的数据文件路径
+                const dataFilePath = this.useMockData 
+                    ? this.mockDataFile 
                     : 'data/processed/stock_data.json';
+                
+                // 动态获取数据路径（确保路径正确）
+                const basePath = window.location.pathname.includes('src')
+                    ? `../${dataFilePath}`
+                    : dataFilePath;
+                
+                if (this.isDebug) {
+                    console.log(`正在从${basePath}加载股票数据，使用${this.useMockData ? '虚拟' : '真实'}数据模式`);
+                }
                 
                 // 从本地JSON文件加载数据
                 const response = await fetch(basePath, {
@@ -212,6 +246,13 @@ class TushareAPI {
                     if (this.isDebug && cachedData.length > 0) {
                         console.log(`使用后备缓存数据，共${cachedData.length}条`);
                     }
+                    
+                    // 如果没有缓存数据，返回一些模拟的示例数据
+                    if (cachedData.length === 0) {
+                        console.log('没有缓存数据，返回模拟示例数据');
+                        return this.generateFallbackMockData();
+                    }
+                    
                     return cachedData;
                 }
                 
@@ -221,6 +262,102 @@ class TushareAPI {
         }
         
         return [];
+    }
+    
+    /**
+     * 生成回退模拟数据，当无法加载任何数据时使用
+     * @returns {Array} 模拟股票数据数组
+     */
+    generateFallbackMockData() {
+        const fallbackData = [
+            {
+                code: '600001.SH',
+                name: '模拟股票1',
+                industry: '科技行业',
+                price: 15.67,
+                priceChange: 0.89,
+                changePercent: 5.98,
+                pe: 23.45,
+                roe: 18.76,
+                turnoverRate: 3.45,
+                volume: 12345678,
+                amount: 193456789.12,
+                marketCap: 123456789012.00,
+                volumeRatio: 1.89,
+                pb: 2.34,
+                date: new Date().toISOString().split('T')[0]
+            },
+            {
+                code: '600002.SH',
+                name: '模拟股票2',
+                industry: '医药行业',
+                price: 28.34,
+                priceChange: -0.45,
+                changePercent: -1.56,
+                pe: 31.23,
+                roe: 15.67,
+                turnoverRate: 2.34,
+                volume: 8765432,
+                amount: 248765432.90,
+                marketCap: 87654321098.00,
+                volumeRatio: 1.23,
+                pb: 3.12,
+                date: new Date().toISOString().split('T')[0]
+            },
+            {
+                code: '000001.SZ',
+                name: '模拟股票3',
+                industry: '金融行业',
+                price: 9.87,
+                priceChange: 0.12,
+                changePercent: 1.23,
+                pe: 12.34,
+                roe: 10.98,
+                turnoverRate: 1.56,
+                volume: 23456789,
+                amount: 231678901.23,
+                marketCap: 234567890123.00,
+                volumeRatio: 0.98,
+                pb: 1.56,
+                date: new Date().toISOString().split('T')[0]
+            }
+        ];
+        
+        return this.cleanStockData(fallbackData);
+    }
+    
+    /**
+     * 切换数据模式（虚拟数据/真实数据）
+     * @param {boolean} useMock - 是否使用虚拟数据
+     * @returns {boolean} 切换后的状态
+     */
+    toggleDataMode(useMock) {
+        this.useMockData = useMock;
+        
+        // 清除缓存，以便下次加载时使用新的数据模式
+        try {
+            localStorage.removeItem('stockDataCache');
+            if (this.isDebug) {
+                console.log(`数据模式已切换为：${useMock ? '虚拟数据' : '真实数据'}，缓存已清除`);
+            }
+        } catch (error) {
+            console.error('清除缓存失败:', error);
+        }
+        
+        return this.useMockData;
+    }
+    
+    /**
+     * 获取当前数据模式
+     * @returns {Object} 数据模式信息
+     */
+    getDataModeInfo() {
+        return {
+            useMockData: this.useMockData,
+            currentDataFile: this.mockDataFile,
+            lastCacheTime: this.lastCacheTimestamp ? 
+                new Date(this.lastCacheTimestamp).toLocaleString() : '无缓存'
+        };
     }
     
     /**
@@ -402,6 +539,248 @@ class TushareAPI {
     }
     
     /**
+     * 显示手机号验证表单
+     * @param {function} onSuccess - 验证成功后的回调函数
+     * @param {Object} stock - 股票数据，用于验证成功后显示
+     */
+    showPhoneVerification(onSuccess, stock) {
+        // 检查是否已经验证过
+        if (localStorage.getItem('phone_verified')) {
+            onSuccess();
+            return;
+        }
+        
+        // 创建模态框容器
+        let modal = document.getElementById('phoneVerificationModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'phoneVerificationModal';
+            modal.className = 'phone-verification-modal';
+            
+            // 添加样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .phone-verification-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                }
+                .phone-verification-content {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    width: 90%;
+                    max-width: 400px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                }
+                .phone-verification-content h2 {
+                    margin: 0 0 20px 0;
+                    text-align: center;
+                    color: #333;
+                }
+                .phone-verification-content p {
+                    margin: 0 0 20px 0;
+                    color: #666;
+                    text-align: center;
+                }
+                .phone-input {
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 16px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    margin-bottom: 15px;
+                    box-sizing: border-box;
+                }
+                .verify-btn {
+                    width: 100%;
+                    padding: 10px;
+                    font-size: 16px;
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                .verify-btn:hover {
+                    background: #0056b3;
+                }
+                .error-message {
+                    color: #e34234;
+                    text-align: center;
+                    margin-top: 10px;
+                    min-height: 20px;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 添加模态框内容
+            modal.innerHTML = `
+                <div class="phone-verification-content">
+                    <h2>获取选股结果</h2>
+                    <p>请输入手机号码进行验证，验证成功后即可查看选股结果</p>
+                    <input type="tel" class="phone-input" placeholder="请输入11位手机号码" maxlength="11">
+                    <div class="error-message"></div>
+                    <button class="verify-btn">立即验证</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // 显示模态框
+        modal.style.display = 'flex';
+        
+        // 获取输入框和按钮
+        const phoneInput = modal.querySelector('.phone-input');
+        const verifyBtn = modal.querySelector('.verify-btn');
+        const errorMessage = modal.querySelector('.error-message');
+        
+        // 清空输入框和错误信息
+        phoneInput.value = '';
+        errorMessage.textContent = '';
+        
+        // 验证手机号格式
+        function validatePhone(phone) {
+            const pattern = /^1[3-9]\d{9}$/;
+            return pattern.test(phone);
+        }
+        
+        // 验证按钮点击事件
+        function handleVerify() {
+            const phone = phoneInput.value.trim();
+            
+            // 验证手机号格式
+            if (!validatePhone(phone)) {
+                errorMessage.textContent = '请输入有效的11位手机号码';
+                return;
+            }
+            
+            // 提交手机号到后端API
+                console.log(`提交手机号: ${phone}`);
+                
+                // 实际调用后端API来保存手机号
+                fetch('http://localhost:8000/api/save_phone', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phone: phone })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // 保存手机号和验证状态到本地存储
+                     localStorage.setItem('phone_number', phone);
+                     localStorage.setItem('phone_verified', 'true');
+                     
+                     // 超级管理电话号码无限制使用，普通号码设置有效期1天
+                     const superAdminPhone = '18066668888';
+                     if (phone !== superAdminPhone) {
+                         const expireTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1天后过期
+                         localStorage.setItem('phone_verified_expire', expireTime.toString());
+                     } else {
+                         // 超级管理号码不设置过期时间
+                         localStorage.removeItem('phone_verified_expire');
+                     }
+                      
+                     // 隐藏模态框
+                     modal.style.display = 'none';
+                      
+                     // 调用成功回调
+                     onSuccess();
+                        
+                        // 显示成功提示
+                        alert(data.message || '验证成功，感谢您的支持！');
+                    } else {
+                        errorMessage.textContent = data.message || '验证失败，请重试';
+                    }
+                })
+                .catch(error => {
+                    console.error('保存手机号失败:', error);
+                    
+                    // 显示友好的错误提示
+                    errorMessage.textContent = '网络错误，请稍后重试';
+                    
+                    // 在网络错误的情况下，仍然让用户能够查看选股结果
+                    // 这是一个临时解决方案，实际项目中应该处理网络问题
+                    setTimeout(() => {
+                        alert('网络连接暂时不稳定，但我们仍然为您显示选股结果');
+                        
+                        // 保存手机号和验证状态到本地存储
+                         localStorage.setItem('phone_number', phone);
+                         localStorage.setItem('phone_verified', 'true');
+                          
+                         // 超级管理电话号码无限制使用，普通号码设置有效期1天
+                         const superAdminPhone = '18066668888';
+                         if (phone !== superAdminPhone) {
+                             const expireTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1天后过期
+                             localStorage.setItem('phone_verified_expire', expireTime.toString());
+                         } else {
+                             // 超级管理号码不设置过期时间
+                             localStorage.removeItem('phone_verified_expire');
+                         }
+                          
+                         // 隐藏模态框
+                         modal.style.display = 'none';
+                          
+                         // 调用成功回调
+                         onSuccess();
+                    }, 1500);
+                });
+        }
+        
+        // 添加事件监听器
+        verifyBtn.onclick = handleVerify;
+        
+        // 允许按Enter键提交
+        phoneInput.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                handleVerify();
+            }
+        };
+    }
+    
+    /**
+     * 检查手机号验证是否过期
+     * @returns {boolean} 验证是否有效
+     */
+    checkPhoneVerification() {
+        const verified = localStorage.getItem('phone_verified');
+        const expireTime = localStorage.getItem('phone_verified_expire');
+        const phoneNumber = localStorage.getItem('phone_number');
+        
+        // 超级管理电话号码无限制使用
+        const superAdminPhone = '18066668888';
+        if (phoneNumber === superAdminPhone) {
+            return true;
+        }
+        
+        if (verified === 'true' && expireTime) {
+            const now = new Date().getTime();
+            if (now < parseInt(expireTime)) {
+                return true;
+            }
+        }
+        
+        // 验证已过期或不存在
+        localStorage.removeItem('phone_verified');
+        localStorage.removeItem('phone_verified_expire');
+        return false;
+    }
+    
+    /**
      * 显示股票详情卡片
      * 优化版：支持自定义样式和动画
      * @param {Object} stock - 股票数据
@@ -411,216 +790,245 @@ class TushareAPI {
         if (!stock) return;
         
         try {
-            // 默认选项
-            const defaultOptions = {
-                position: 'right', // 'right' 或 'center'
-                duration: 300, // 动画持续时间
-                showClose: true, // 是否显示关闭按钮
-                highlightFields: ['price', 'changePercent'] // 需要高亮显示的字段
-            };
-            
-            const config = { ...defaultOptions, ...options };
-            
-            // 查找或创建结果容器
-            let resultContainer = document.getElementById('resultContainer');
-            if (!resultContainer) {
-                // 如果没有结果容器，创建一个
-                resultContainer = document.createElement('div');
-                resultContainer.id = 'resultContainer';
-                resultContainer.className = 'result-container';
-                resultContainer.style.position = 'fixed';
-                resultContainer.style.zIndex = '1000';
-                resultContainer.style.display = 'flex';
-                resultContainer.style.flexDirection = 'column';
-                resultContainer.style.gap = '10px';
-                
-                if (config.position === 'center') {
-                    resultContainer.style.top = '50%';
-                    resultContainer.style.left = '50%';
-                    resultContainer.style.transform = 'translate(-50%, -50%)';
-                } else {
-                    resultContainer.style.top = '20px';
-                    resultContainer.style.right = '20px';
-                }
-                
-                document.body.appendChild(resultContainer);
+            // 检查是否已经验证过手机号
+            if (!this.checkPhoneVerification()) {
+                // 显示手机号验证表单
+                this.showPhoneVerification(() => {
+                    // 验证成功后显示股票详情
+                    this._displayStockDetail(stock, options);
+                }, stock);
+                return;
             }
             
-            // 创建股票详情卡片
-            const card = document.createElement('div');
-            card.className = 'stock-detail-card';
+            // 如果已经验证过，直接显示股票详情
+            this._displayStockDetail(stock, options);
+        }
+        catch (error) {
+            console.error('显示股票详情失败:', error);
+            // 避免频繁弹出alert
+            if (console && console.warn) {
+                console.warn(`显示股票详情失败: ${error.message}`);
+            }
+        }
+    }
+    
+    /**
+     * 实际显示股票详情的内部方法
+     * @private
+     * @param {Object} stock - 股票数据
+     * @param {Object} options - 配置选项
+     */
+    _displayStockDetail(stock, options = {}) {
+        // 默认选项
+        const defaultOptions = {
+            position: 'right', // 'right' 或 'center'
+            duration: 300, // 动画持续时间
+            showClose: true, // 是否显示关闭按钮
+            highlightFields: ['price', 'changePercent'] // 需要高亮显示的字段
+        };
+        
+        const config = { ...defaultOptions, ...options };
+        
+        // 查找或创建结果容器
+        let resultContainer = document.getElementById('resultContainer');
+        if (!resultContainer) {
+            // 如果没有结果容器，创建一个
+            resultContainer = document.createElement('div');
+            resultContainer.id = 'resultContainer';
+            resultContainer.className = 'result-container';
+            resultContainer.style.position = 'fixed';
+            resultContainer.style.zIndex = '1000';
+            resultContainer.style.display = 'flex';
+            resultContainer.style.flexDirection = 'column';
+            resultContainer.style.gap = '10px';
             
-            // 添加初始样式以支持动画
-            card.style.transform = config.position === 'center' ? 'translate(-50%, -50%) scale(0.8)' : 'translateX(100%)';
-            card.style.opacity = '0';
-            card.style.transition = `transform ${config.duration}ms ease-out, opacity ${config.duration}ms ease-out`;
-            
-            // 构建卡片内容
-            let closeButton = config.showClose ? 
-                '<button class="close-btn" onclick="this.parentElement.parentElement.remove()">×</button>' : '';
-            
-            // 构建指标网格
-            let metricsHtml = '';
-            const metrics = [
-                { label: '市盈率(PE)', value: stock.pe },
-                { label: '市净率(PB)', value: stock.pb },
-                { label: 'ROE', value: `${stock.roe || 0}%` },
-                { label: '换手率', value: `${stock.turnoverRate || 0}%` },
-                { label: '行业', value: stock.industry || '未分类' },
-                { label: '市值', value: `${stock.marketCap || 0}亿` }
-            ];
-            
-            metrics.forEach(metric => {
-                metricsHtml += `
-                    <div class="metric-item">
-                        <span class="metric-label">${metric.label}</span>
-                        <span class="metric-value">${metric.value}</span>
-                    </div>
-                `;
-            });
-            
-            // 添加投资建议（如果有）
-            let adviceHtml = '';
-            if (stock.advice) {
-                adviceHtml = `
-                    <div class="advice-section">
-                        <h4>投资建议</h4>
-                        <p>${stock.advice}</p>
-                    </div>
-                `;
+            if (config.position === 'center') {
+                resultContainer.style.top = '50%';
+                resultContainer.style.left = '50%';
+                resultContainer.style.transform = 'translate(-50%, -50%)';
+            } else {
+                resultContainer.style.top = '20px';
+                resultContainer.style.right = '20px';
             }
             
-            card.innerHTML = `
-                <div class="card-header">
-                    <h3>${stock.name}</h3>
-                    <span class="stock-code">${this.formatStockCode(stock.code)}</span>
-                    ${closeButton}
-                </div>
-                <div class="card-body">
-                    <div class="price-section">
-                        <span class="current-price">¥${stock.price}</span>
-                        <span class="price-change ${stock.changePercent >= 0 ? 'up' : 'down'}">
-                            ${stock.changePercent >= 0 ? '+' : ''}${stock.changePercent}%
-                        </span>
-                    </div>
-                    <div class="metrics-grid">
-                        ${metricsHtml}
-                    </div>
-                    ${adviceHtml}
+            document.body.appendChild(resultContainer);
+        }
+        
+        // 创建股票详情卡片
+        const card = document.createElement('div');
+        card.className = 'stock-detail-card';
+        
+        // 添加初始样式以支持动画
+        card.style.transform = config.position === 'center' ? 'translate(-50%, -50%) scale(0.8)' : 'translateX(100%)';
+        card.style.opacity = '0';
+        card.style.transition = `transform ${config.duration}ms ease-out, opacity ${config.duration}ms ease-out`;
+        
+        // 构建卡片内容
+        let closeButton = config.showClose ? 
+            '<button class="close-btn" onclick="this.parentElement.parentElement.remove()">×</button>' : '';
+        
+        // 构建指标网格
+        let metricsHtml = '';
+        const metrics = [
+            { label: '市盈率(PE)', value: stock.pe },
+            { label: '市净率(PB)', value: stock.pb },
+            { label: 'ROE', value: `${stock.roe || 0}%` },
+            { label: '换手率', value: `${stock.turnoverRate || 0}%` },
+            { label: '行业', value: stock.industry || '未分类' },
+            { label: '市值', value: `${stock.marketCap || 0}亿` }
+        ];
+        
+        metrics.forEach(metric => {
+            metricsHtml += `
+                <div class="metric-item">
+                    <span class="metric-label">${metric.label}</span>
+                    <span class="metric-value">${metric.value}</span>
                 </div>
             `;
-            
-            // 添加卡片样式
-            const style = document.createElement('style');
-            style.textContent = `
-                .stock-detail-card {
-                    background: rgba(255, 255, 255, 0.95);
-                    border-radius: 10px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                    padding: 15px;
-                    min-width: 300px;
-                    backdrop-filter: blur(10px);
-                }
-                .card-header {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 10px;
-                }
-                .card-header h3 {
-                    margin: 0;
-                    font-size: 18px;
-                    color: #333;
-                }
-                .stock-code {
-                    font-size: 14px;
-                    color: #666;
-                    margin-left: 10px;
-                }
-                .close-btn {
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: #999;
-                    padding: 0;
-                    width: 24px;
-                    height: 24px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 50%;
-                }
-                .close-btn:hover {
-                    background: #f5f5f5;
-                    color: #333;
-                }
-                .price-section {
-                    display: flex;
-                    align-items: baseline;
-                    margin-bottom: 15px;
-                }
-                .current-price {
-                    font-size: 28px;
-                    font-weight: bold;
-                    color: #333;
-                    margin-right: 10px;
-                }
-                .price-change {
-                    font-size: 20px;
-                    font-weight: bold;
-                }
-                .price-change.up {
-                    color: #e34234;
-                }
-                .price-change.down {
-                    color: #2b73b7;
-                }
-                .metrics-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 10px;
-                }
-                .metric-item {
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .metric-label {
-                    font-size: 14px;
-                    color: #666;
-                }
-                .metric-value {
-                    font-size: 14px;
-                    color: #333;
-                    font-weight: 500;
-                }
-                .advice-section {
-                    margin-top: 15px;
-                    padding-top: 15px;
-                    border-top: 1px solid #eee;
-                }
-                .advice-section h4 {
-                    margin: 0 0 8px 0;
-                    font-size: 16px;
-                    color: #333;
-                }
-                .advice-section p {
-                    margin: 0;
-                    font-size: 14px;
-                    color: #666;
-                    line-height: 1.5;
-                }
+        });
+        
+        // 添加投资建议（如果有）
+        let adviceHtml = '';
+        if (stock.advice) {
+            adviceHtml = `
+                <div class="advice-section">
+                    <h4>投资建议</h4>
+                    <p>${stock.advice}</p>
+                </div>
             `;
-            document.head.appendChild(style);
-            
-            // 添加卡片到容器
-            resultContainer.appendChild(card);
-            
-            // 触发动画
-            setTimeout(() => {
-                card.style.transform = config.position === 'center' ? 'translate(-50%, -50%) scale(1)' : 'translateX(0)';
-                card.style.opacity = '1';
-            }, 10);
+        }
+        
+        card.innerHTML = `
+            <div class="card-header">
+                <h3>${stock.name}</h3>
+                <span class="stock-code">${this.formatStockCode(stock.code)}</span>
+                ${closeButton}
+            </div>
+            <div class="card-body">
+                <div class="price-section">
+                    <span class="current-price">¥${stock.price}</span>
+                    <span class="price-change ${stock.changePercent >= 0 ? 'up' : 'down'}">
+                        ${stock.changePercent >= 0 ? '+' : ''}${stock.changePercent}%
+                    </span>
+                </div>
+                <div class="metrics-grid">
+                    ${metricsHtml}
+                </div>
+                ${adviceHtml}
+            </div>
+        `;
+        
+        // 添加卡片样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .stock-detail-card {
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                padding: 15px;
+                min-width: 300px;
+                backdrop-filter: blur(10px);
+            }
+            .card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+            .card-header h3 {
+                margin: 0;
+                font-size: 18px;
+                color: #333;
+            }
+            .stock-code {
+                font-size: 14px;
+                color: #666;
+                margin-left: 10px;
+            }
+            .close-btn {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #999;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+            }
+            .close-btn:hover {
+                background: #f5f5f5;
+                color: #333;
+            }
+            .price-section {
+                display: flex;
+                align-items: baseline;
+                margin-bottom: 15px;
+            }
+            .current-price {
+                font-size: 28px;
+                font-weight: bold;
+                color: #333;
+                margin-right: 10px;
+            }
+            .price-change {
+                font-size: 20px;
+                font-weight: bold;
+            }
+            .price-change.up {
+                color: #e34234;
+            }
+            .price-change.down {
+                color: #2b73b7;
+            }
+            .metrics-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .metric-item {
+                display: flex;
+                justify-content: space-between;
+            }
+            .metric-label {
+                font-size: 14px;
+                color: #666;
+            }
+            .metric-value {
+                font-size: 14px;
+                color: #333;
+                font-weight: 500;
+            }
+            .advice-section {
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+            }
+            .advice-section h4 {
+                margin: 0 0 8px 0;
+                font-size: 16px;
+                color: #333;
+            }
+            .advice-section p {
+                margin: 0;
+                font-size: 14px;
+                color: #666;
+                line-height: 1.5;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 添加卡片到容器
+        resultContainer.appendChild(card);
+        
+        // 触发动画
+        setTimeout(() => {
+            card.style.transform = config.position === 'center' ? 'translate(-50%, -50%) scale(1)' : 'translateX(0)';
+            card.style.opacity = '1';
+        }, 10);
         } catch (error) {
             console.error('显示股票详情失败:', error);
             // 避免频繁弹出alert
@@ -638,7 +1046,7 @@ class TushareAPI {
         // 简单实现：如果有baseUrl配置，则认为API可用
         // 实际项目中可以添加更复杂的健康检查逻辑
         return this.baseUrl !== '';
-    }
+    };
     
     /**
      * 模拟加载最新股票数据
@@ -714,23 +1122,6 @@ window.tushareAPI = new TushareAPI();
 function initStockSearchFeature() {
     // 已移除股票搜索功能的相关元素
 }
-
-// 创建TushareAPI的实例并添加isAvailable方法
-window.TushareAPI = new TushareAPI();
-window.TushareAPI.isAvailable = function() {
-    // 简单实现：如果有baseUrl配置，则认为API可用
-    return this.baseUrl !== '';
-};
-window.TushareAPI.loadLatestStockData = function() {
-    // 模拟加载最新股票数据的Promise
-    return new Promise((resolve, reject) => {
-        // 实际项目中这里应该是API调用
-        setTimeout(() => {
-            console.log('模拟加载Tushare API数据失败，将使用本地数据');
-            resolve(null); // 返回null表示API不可用或加载失败
-        }, 1000);
-    });
-};
 
 // 同时保留原始类，方便需要时创建新实例
 window.TushareAPIClass = TushareAPI;

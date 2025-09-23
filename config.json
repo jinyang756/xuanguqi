@@ -1,0 +1,14 @@
+{
+  "useMockData": true,
+  "mockDataFile": "stock_data_mock.json",
+  "debug": false,
+  "dataSource": {
+    "type": "json",
+    "basePath": "data/processed",
+    "fallbackToMock": true
+  },
+  "cache": {
+    "enabled": true,
+    "duration": 3600
+  }
+}

@@ -102,23 +102,58 @@ def display_stock_info(stock):
     print("==================")
 
 # 主函数
-def main():
+def main(config=None):
+    # 获取配置
+    use_mock_data = False
+    mock_data_file = 'stock_data_mock.json'
+    
+    if config:
+        use_mock_data = config.get('useMockData', False)
+        mock_data_file = config.get('mockDataFile', 'stock_data_mock.json')
+        print(f"使用配置: useMockData={use_mock_data}, mockDataFile={mock_data_file}")
+    
     # 获取当前文件所在目录
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, 'data', 'processed')
     
-    # 优先使用过滤后的A股数据文件
-    stock_data_file = os.path.join(base_dir, 'data', 'processed', 'stock_data_a_shares_fixed.json')
-    
-    # 如果A股数据文件不存在，则尝试使用修复了中文编码的完整数据
-    if not os.path.exists(stock_data_file):
-        stock_data_file = os.path.join(base_dir, 'data', 'processed', 'stock_data_fixed.json')
-        print(f"警告：A股数据文件不存在，使用完整数据文件: {stock_data_file}")
+    # 根据配置选择数据文件
+    if use_mock_data:
+        stock_data_file = os.path.join(data_dir, mock_data_file)
+        print(f"使用虚拟数据文件: {stock_data_file}")
         
-        # 如果修复的文件也不存在，则尝试读取原始文件
+        # 如果虚拟数据文件不存在，显示警告
         if not os.path.exists(stock_data_file):
-            stock_data_file = os.path.join(base_dir, 'data', 'processed', 'stock_data.json')
-            print(f"警告：使用原始数据文件，可能存在中文编码问题: {stock_data_file}")
+            print(f"警告：虚拟数据文件不存在: {stock_data_file}")
+            print("将尝试生成虚拟数据或使用默认数据文件")
+            
+            # 尝试导入并运行数据生成脚本
+            try:
+                import sys
+                sys.path.append(os.path.dirname(os.path.dirname(base_dir)))
+                from generate_mock_data import generate_mock_stock_data, save_to_json
+                print("尝试生成虚拟数据...")
+                mock_stocks = generate_mock_stock_data(num_stocks=100)
+                save_to_json(mock_stocks, stock_data_file)
+                print(f"成功生成虚拟数据到: {stock_data_file}")
+            except Exception as e:
+                print(f"生成虚拟数据失败: {e}")
+            print("将使用默认数据文件")
+            # 回退到默认数据文件
+            stock_data_file = os.path.join(data_dir, 'stock_data.json')
+    else:
+        # 优先使用过滤后的A股数据文件
+        stock_data_file = os.path.join(data_dir, 'stock_data_a_shares_fixed.json')
+        
+        # 如果A股数据文件不存在，则尝试使用修复了中文编码的完整数据
+        if not os.path.exists(stock_data_file):
+            stock_data_file = os.path.join(data_dir, 'stock_data_fixed.json')
+            print(f"警告：A股数据文件不存在，使用完整数据文件: {stock_data_file}")
+            
+            # 如果修复的文件也不存在，则尝试读取原始文件
+            if not os.path.exists(stock_data_file):
+                stock_data_file = os.path.join(data_dir, 'stock_data.json')
+                print(f"警告：使用原始数据文件，可能存在中文编码问题: {stock_data_file}")
     
     # 读取股票数据
     stock_data = load_stock_data(stock_data_file)
