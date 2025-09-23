@@ -19,23 +19,47 @@
 选股器/
 ├── src/                  # 前端相关文件
 │   ├── index.html        # 主页面
-│   ├── stock_selector.js # 选股算法模块
-│   └── tushare_api.js    # API集成模块
+│   ├── js/               # JavaScript文件
+│   │   ├── stock_selector.js # 选股算法模块
+│   │   └── tushare_api.js    # API集成模块
+│   ├── css/              # CSS样式文件
+│   └── resources/        # 前端资源
+│       └── fonts/        # 字体文件
 ├── backend/              # 后端Python脚本
-│   ├── select_stock.py   # 股票筛选主脚本
-│   └── parse_day_files.py # .day文件解析工具
+│   ├── data_processing/  # 数据处理模块
+│   │   ├── parse_day_files.py        # .day文件解析工具
+│   │   ├── cleanup_a_stock_data.py   # A股数据清理工具
+│   │   └── integrate_stock_data.py   # 数据整合脚本
+│   ├── filtering/        # 股票筛选模块
+│   │   ├── select_stock.py   # 股票筛选主脚本
+│   │   └── filter_a_stocks.py # A股数据过滤脚本
+│   ├── api/              # API模块
+│   │   └── free_stock_data.py # 免费数据源脚本
+│   └── tests/            # 测试脚本
+│       └── test_stock_selection.py # 选股功能测试
 ├── data/                 # 数据相关文件
 │   ├── original/         # 原始数据
 │   │   ├── a_stock_lday/     # A股.day格式数据文件
 │   │   └── non_a_stock_lday/ # 非A股.day格式数据文件
-│   └── processed/        # 处理后的数据
-│       └── stock_data_a_shares_fixed.json # 过滤后的A股数据
-├── resources/            # 资源文件
-│   └── fonts/            # 字体文件
-│       └── README.md     # 字体安装说明
+│   ├── processed/        # 处理后的数据
+│   │   └── stock_data_a_shares_fixed.json # 过滤后的A股数据
+│   └── daily/            # 特定股票的日线数据
+├── docs/                 # 文档目录
+│   ├── README.md                 # 项目说明文档
+│   ├── README_DEPLOY.md          # 部署说明
+│   ├── 开发维护日志.md            # 开发和维护记录
+│   └── A股数据清理和目录优化报告.md  # 数据清理报告
+├── logs/                 # 日志文件目录
+├── scripts/              # 工具脚本
+│   ├── check_data_dir.py      # 数据目录检查
+│   ├── check_original_data.py # 原始数据检查
+│   ├── fix_encoding.py        # 编码修复工具
+│   └── verify_cleanup.py      # 清理验证工具
+├── config/               # 配置文件
+│   └── vercel.json       # Vercel部署配置
 ├── 更新股票数据.bat       # 数据更新批处理脚本
 ├── run_stock_selector.py # 主启动脚本
-└── README.md             # 项目说明文档
+└── .gitignore            # Git忽略文件
 ```
 
 ## 功能介绍
@@ -118,7 +142,7 @@ python -m http.server 8080
 直接运行后端脚本：
 
 ```bash
-cd c:/Users/28163/Desktop/选股器/backend
+cd c:/Users/28163/Desktop/选股器/backend/filtering
 python select_stock.py
 ```
 
@@ -141,17 +165,16 @@ python run_stock_selector.py
 ### 后端开发
 
 后端使用Python实现数据处理和选股逻辑，主要文件位于backend/目录：
-- parse_day_files.py: 解析通达信.day文件
-- select_stock.py: 实现选股算法和结果展示
+- data_processing/parse_day_files.py: 解析通达信.day文件
+- filtering/select_stock.py: 实现选股算法和结果展示
 
 ### 数据处理工具
 
-- free_stock_data.py: 从免费数据源获取股票数据
-- integrate_stock_data.py: 整合各类数据源
-- tushare_basic_data.py: 获取基础股票信息
-- filter_a_stocks.py: 过滤A股数据
-- fix_a_shares_encoding.py: 修复中文编码问题
-- cleanup_a_stock_data.py: 清理和优化A股数据
+- api/free_stock_data.py: 从免费数据源获取股票数据
+- data_processing/integrate_stock_data.py: 整合各类数据源
+- data_processing/cleanup_a_stock_data.py: 清理和优化A股数据
+- filtering/filter_a_stocks.py: 过滤A股数据
+- scripts/fix_encoding.py: 修复中文编码问题（支持A股和通用数据）
 
 ## 字体配置
 

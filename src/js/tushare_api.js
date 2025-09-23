@@ -13,6 +13,13 @@ class TushareAPI {
         // 缓存机制优化
         this.cacheTimeout = 15 * 60 * 1000; // 缓存15分钟
         this.lastCacheTimestamp = null;
+        
+        // 初始化缓存统计
+        this.cacheStats = {
+            hits: 0,
+            misses: 0,
+            totalRequests: 0
+        };
     }
     
     /**
@@ -166,8 +173,13 @@ class TushareAPI {
         
         while (retryCount < maxRetries) {
             try {
+                // 动态获取数据路径（假设脚本在src目录，数据在src同级的data目录）
+                const basePath = window.location.pathname.includes('src')
+                    ? '../data/processed/stock_data.json'
+                    : 'data/processed/stock_data.json';
+                
                 // 从本地JSON文件加载数据
-                const response = await fetch('../data/processed/stock_data.json', {
+                const response = await fetch(basePath, {
                     cache: 'no-cache' // 避免浏览器过度缓存
                 });
                 

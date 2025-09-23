@@ -36,7 +36,7 @@
 
 ### 3. 编码修复
 
-由于Windows命令行环境的编码问题，过滤后的A股数据出现了中文乱码。为此开发了`fix_a_shares_encoding.py`脚本，修复了以下文件的编码问题：
+由于Windows命令行环境的编码问题，过滤后的A股数据出现了中文乱码。为此开发了`fix_encoding.py`脚本（合并了原`fix_a_shares_encoding.py`的功能），修复了以下文件的编码问题：
 
 - `stock_data_a_shares.json` -> `stock_data_a_shares_fixed.json`（A股数据文件）
 - `stock_data_a_shares_filter_report.txt` -> `stock_data_a_shares_filter_report_fixed.txt`（过滤报告）
@@ -78,7 +78,7 @@
 ## 文件位置
 
 - 过滤工具：`filter_a_stocks.py`
-- 编码修复工具：`fix_a_shares_encoding.py`
+- 编码修复工具：`fix_encoding.py`（支持A股和通用数据）
 - 过滤后的A股数据：`data/processed/stock_data_a_shares_fixed.json`
 - 过滤报告：`data/processed/stock_data_a_shares_filter_report_fixed.txt`
 - 更新后的选股器：`backend/select_stock.py`

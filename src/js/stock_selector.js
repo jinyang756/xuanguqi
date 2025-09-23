@@ -74,6 +74,12 @@ class StockSelector {
         keyMetrics.forEach(metric => {
             if (filteredStocks.length === 0) return;
             
+            // 新增：数量不足时跳过异常值处理
+            if (filteredStocks.length < 4) {
+                console.warn(`指标${metric}数据量不足4条，跳过异常值处理`);
+                return;
+            }
+            
             try {
                 const values = filteredStocks.map(stock => stock[metric]).sort((a, b) => a - b);
                 const q1 = values[Math.floor(values.length * 0.25)];

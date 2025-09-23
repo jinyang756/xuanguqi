@@ -49,7 +49,7 @@ venv/
 # 备份文件
 *.bak
 *.old
-*.~*
+*~*
 
 # 敏感信息
 *.pem
@@ -61,3 +61,14 @@ venv/
 *.exe
 *.bat
 .vercel
+
+# 新增规则
+logs/*.log
+logs/*.txt
+config/*.local
+scripts/__pycache__/
+backend/__pycache__/
+backend/data_processing/__pycache__/
+backend/filtering/__pycache__/
+backend/api/__pycache__/
+backend/tests/__pycache__/

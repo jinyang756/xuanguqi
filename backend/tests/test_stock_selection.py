@@ -2,15 +2,15 @@ import sys
 import os
 
 # 添加backend目录到Python路径
-sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 # 导入选股模块
-from select_stock import load_stock_data, select_stock_for_short_term_growth, display_stock_info
+from filtering.select_stock import load_stock_data, select_stock_for_short_term_growth, display_stock_info
 
 # 测试不同的数据文件 - 使用绝对路径
-base_dir = os.path.dirname(__file__)
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 data_files = [
-    os.path.join(base_dir, 'data', 'processed', 'stock_data_fixed.json'),  # 修复了中文编码的数据
+    os.path.join(base_dir, 'data', 'processed', 'stock_data_a_shares_fixed.json'),  # 修复了中文编码的A股数据
     os.path.join(base_dir, 'data', 'processed', 'stock_data.json')          # 原始数据
 ]
 

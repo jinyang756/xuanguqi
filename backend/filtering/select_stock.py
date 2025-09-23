@@ -44,17 +44,35 @@ def select_stock_for_short_term_growth(stock_data):
                      reverse=True)
         return stocks_copy[0] if stocks_copy else None
     
-    # 复制有效数据以避免修改
-    stocks_copy = valid_stocks.copy()
+    # 新增：计算归一化因子
+    def normalize(values):
+        min_val = min(values)
+        max_val = max(values)
+        range_val = max_val - min_val if max_val != min_val else 1
+        return [(v - min_val) / range_val for v in values]
     
-    # 按照短期上涨潜力排序（主要基于涨跌幅和成交量变化）
-    stocks_copy.sort(key=lambda stock: float(stock.get('priceChange', 0)) * 0.4 + \
-                 float(stock.get('turnoverRate', 0)) * 0.3 + \
-                 float(stock.get('volume', 0)) * 0.3, 
-                 reverse=True)
+    # 提取关键指标并归一化
+    price_changes = [float(s['priceChange']) for s in valid_stocks]
+    turnover_rates = [float(s['turnoverRate']) for s in valid_stocks]
+    volumes = [float(s['volume']) / float(s['marketCap']) for s in valid_stocks]  # 成交量/市值
+    pes = [float(s['pe']) for s in valid_stocks]
+    roes = [float(s['roe']) for s in valid_stocks]
     
-    # 返回评分最高的股票
-    return stocks_copy[0] if stocks_copy else None
+    norm_price = normalize(price_changes)
+    norm_turnover = normalize(turnover_rates)
+    norm_volume = normalize(volumes)
+    norm_pe = [1 - v for v in normalize(pes)]  # PE低则得分高
+    norm_roe = normalize(roes)
+    
+    # 计算综合评分（与前端一致：技术面70% + 基本面30%）
+    for i, stock in enumerate(valid_stocks):
+        technical_score = norm_price[i] * 0.4 + norm_turnover[i] * 0.3 + norm_volume[i] * 0.3
+        fundamental_score = norm_pe[i] * 0.4 + norm_roe[i] * 0.6
+        stock['score'] = technical_score * 0.7 + fundamental_score * 0.3
+    
+    # 按评分排序
+    valid_stocks.sort(key=lambda x: x['score'], reverse=True)
+    return valid_stocks[0] if valid_stocks else None
 
 # 格式化显示股票信息
 def display_stock_info(stock):

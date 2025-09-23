@@ -67,13 +67,13 @@
 ### cleanup_a_stock_data.py
 A股数据清理工具，支持自动确认模式：
 ```bash
-python cleanup_a_stock_data.py --auto-confirm  # 自动确认所有操作
+python backend/data_processing/cleanup_a_stock_data.py --auto-confirm  # 自动确认所有操作
 ```
 
 ### verify_cleanup.py
 清理结果验证工具，用于检查数据清理和目录优化是否成功：
 ```bash
-python verify_cleanup.py
+python scripts/verify_cleanup.py
 ```
 
 ---

@@ -27,7 +27,7 @@ class ProjectCleanupExecutor:
             # 数据整合脚本（只保留integrate_stock_data.py）
             'process_tushare_data.py',
             
-            # 编码修复脚本（只保留fix_a_shares_encoding.py）
+            # 编码修复脚本（已合并到fix_encoding.py）
             'fix_encoding.py',
             'count_stocks.py',
             
@@ -42,7 +42,7 @@ class ProjectCleanupExecutor:
         # 定义要保留的文件
         self.files_to_keep = [
             'filter_a_stocks.py',
-            'fix_a_shares_encoding.py',
+            'fix_encoding.py',
             'run_stock_selector.py',
             'backend/select_stock.py',
             'backend/parse_day_files.py',

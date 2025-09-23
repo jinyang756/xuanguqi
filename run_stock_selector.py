@@ -3,6 +3,7 @@ import os
 import subprocess
 import webbrowser
 import time
+import sys
 from threading import Thread
 
 # 设置Windows编码
@@ -44,7 +45,7 @@ def start_http_server():
 
 # 运行后端选股逻辑
 def run_stock_selection():
-    from select_stock import main as run_stock_selector
+    from backend.filtering.select_stock import main as run_stock_selector
     try:
         print("=== 选股器启动 ===" 
               "\n正在读取股票数据并执行选股逻辑...\n")

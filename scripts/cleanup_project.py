@@ -44,7 +44,7 @@ class ProjectCleaner:
                     'fix_encoding.py',
                     'count_stocks.py'
                 ],
-                'recommended': 'fix_a_shares_encoding.py'
+                'recommended': 'fix_encoding.py'
             },
             {
                 'description': '数据源集成脚本',
