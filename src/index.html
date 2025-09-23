@@ -1,0 +1,2913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>萤火幻方量化智能选股器</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="tushare_api.js"></script>
+    <script src="stock_selector.js"></script>
+    <style>
+        /* 系统默认字体配置 */
+        
+        /* 全局样式和变量 */
+        :root {
+            --primary-color: #00f0ff;
+            --secondary-color: #05ffa1;
+            --accent-color: #ff2a6d;
+            --bg-color: #050a1e;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            touch-action: manipulation; /* 优化触摸设备体验 */
+        }
+        
+        /* 响应式字体大小 */
+        html {
+            font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            html {
+                font-size: 12px;
+            }
+        }
+        
+        .title-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 33.3%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            padding-bottom: 20px;
+        }
+        
+        .title {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            text-align: center;
+            z-index: 100;
+            max-width: 90%;
+        }
+        
+        .main-title {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--secondary-color), var(--primary-color));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            display: block;
+            letter-spacing: 2px;
+            animation: glow-pulse 2s infinite alternate, signal-flow 3s linear infinite, flicker 5s infinite;
+            font-weight: 900;
+        }
+        
+        .sub-title {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.8), rgba(5, 255, 161, 0.8), rgba(0, 240, 255, 0.8));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(5, 255, 161, 0.3);
+            display: block;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            animation: signal-flow 4s linear infinite;
+        }
+        
+        @keyframes glow-pulse {
+            0% {
+                text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            }
+            100% {
+                text-shadow: 0 0 25px rgba(0, 240, 255, 0.8), 0 0 40px rgba(5, 255, 161, 0.5);
+            }
+        }
+        
+        /* 电信号流动效果 */
+        @keyframes signal-flow {
+            0% {
+                background-position: 0% 50%;
+                opacity: 0.8;
+            }
+            50% {
+                background-position: 100% 50%;
+                opacity: 1;
+            }
+            100% {
+                background-position: 200% 50%;
+                opacity: 0.8;
+            }
+        }
+        
+        @keyframes flicker {
+            0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+                opacity: 1;
+            }
+            20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+                opacity: 0.4;
+            }
+        }
+        
+        /* 标题响应式优化 */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.3rem;
+            }
+            
+            .sub-title {
+                font-size: 1.5rem;
+            }
+            
+            .button-text {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2rem;
+                padding: 0 15px;
+            }
+            
+            .sub-title {
+                font-size: 1.3rem;
+            }
+            
+            .button-text {
+                font-size: 1.3rem;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .title-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .license-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+            z-index: 100;
+            max-width: 50%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* 许可证信息响应式优化 */
+        @media (max-width: 768px) {
+            .license-info {
+                font-size: 0.7rem;
+                right: 5px;
+                top: 5px;
+            }
+        }
+        
+        .glass-effect {
+            background: rgba(5, 10, 30, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+        
+        .control-btn {
+            position: absolute;
+            bottom: 30px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            text-align: center;
+            touch-action: manipulation;
+
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+        }
+        
+        #sound-btn {
+            left: 30px;
+            background: linear-gradient(90deg, var(--accent-color), #ff6b9d);
+        }
+        
+        #fullscreen-btn {
+            right: 30px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+        }
+        
+        /* 控制按钮响应式优化 */
+        @media (max-width: 768px) {
+            .control-btn {
+                bottom: 20px;
+                font-size: 0.9rem;
+                padding: 8px 16px;
+                min-width: 80px;
+            }
+            
+            #sound-btn, #fullscreen-btn {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .control-btn {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                min-width: 70px;
+            }
+            
+            #sound-btn {
+                left: 20px;
+            }
+            
+            #fullscreen-btn {
+                right: 20px;
+            }
+        }
+        
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #result-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            display: none;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .stock-code {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-size: 5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            animation: signal-flow 3s linear infinite;
+        }
+        
+        .stock-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+        
+        .stock-metric {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            animation: flicker 15s infinite;
+        }
+        
+        /* 股票代码和信息响应式优化 */
+        @media (max-width: 768px) {
+            .stock-code {
+                font-size: 4rem;
+                margin-bottom: 15px;
+            }
+            
+            .stock-info {
+                gap: 15px;
+                margin-top: 25px;
+                padding: 0 15px;
+            }
+            
+            .stock-metric {
+                padding: 8px 16px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stock-code {
+                font-size: 3rem;
+                margin-bottom: 10px;
+                padding: 0 10px;
+            }
+            
+            .stock-info {
+                gap: 10px;
+                margin-top: 20px;
+                padding: 0 10px;
+            }
+            
+            .stock-metric {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        .basic-metrics, .extra-metrics {
+            background: rgba(5, 10, 30, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            min-width: 250px;
+        }
+        
+        .basic-metrics h3 {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+
+        }
+        
+        .basic-metrics p, .extra-metrics p {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+        
+        /* 指标卡片响应式优化 */
+        @media (max-width: 768px) {
+            .basic-metrics, .extra-metrics {
+                padding: 15px;
+                min-width: 90%;
+                margin: 0 auto 15px;
+            }
+            
+            .basic-metrics h3 {
+                font-size: 1.3rem;
+                margin-bottom: 12px;
+            }
+            
+            .basic-metrics p, .extra-metrics p {
+                margin-bottom: 8px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .basic-metrics, .extra-metrics {
+                padding: 12px;
+                min-width: 95%;
+            }
+            
+            .basic-metrics h3 {
+                font-size: 1.2rem;
+                margin-bottom: 10px;
+            }
+            
+            .basic-metrics p, .extra-metrics p {
+                margin-bottom: 6px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        .basic-metrics strong, .extra-metrics strong {
+            color: #05ffa1;
+            text-shadow: 0 0 5px rgba(5, 255, 161, 0.5);
+
+        }
+        
+        .reset-button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+            background-size: 200% auto;
+            border: none;
+            border-radius: 30px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            animation: signal-flow 3s linear infinite;
+        }
+        
+        .reset-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+        }
+        
+        .price-up {
+            background: rgba(5, 255, 161, 0.2);
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+        }
+        
+        .price-down {
+            background: rgba(255, 42, 109, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .halo {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.2) 0%, rgba(0, 240, 255, 0) 70%);
+            filter: blur(20px);
+            z-index: -1;
+            animation: pulse 3s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        #main-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.3) 0%, rgba(5, 10, 30, 0) 70%);
+            border: 2px solid rgba(0, 240, 255, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+        
+        /* 主按钮响应式优化 */
+        @media (max-width: 768px) {
+            #main-button {
+                width: 160px;
+                height: 160px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #main-button {
+                width: 140px;
+                height: 140px;
+            }
+        }
+        
+        /* 按钮容器样式 */
+        .btn-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+        
+        /* 按钮容器响应式优化 */
+        @media (max-width: 768px) {
+            .btn-container {
+                width: 160px;
+                height: 160px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn-container {
+                width: 140px;
+                height: 140px;
+            }
+        }
+        
+        /* 粒子流Canvas样式 */
+        #loadingCanvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* 进度环样式 */
+        .progress-ring {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 5px solid transparent;
+            border-top: 5px solid var(--primary-color);
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 加载指示器样式 */
+        .loading-indicator {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            margin-top: 30px;
+        }
+        
+        .loading-text {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        
+        #main-button:hover {
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
+        #main-button::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, rgba(0, 240, 255, 0) 70%);
+            animation: ripple 2s infinite;
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .button-text {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-align: center;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            animation: button-glow 3s infinite alternate, signal-flow 3s linear infinite;
+        }
+        
+        @keyframes button-glow {
+            0% {
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(5, 255, 161, 0.6);
+            }
+            100% {
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            }
+        }
+        
+        /* 折叠菜单样式 */
+        .menu-toggle {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.5) 0%, rgba(5, 10, 30, 0) 70%);
+            border: 1px solid rgba(0, 240, 255, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        
+        .menu-toggle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.3) 0%, rgba(0, 240, 255, 0) 70%);
+            animation: ripple 2s infinite;
+        }
+        
+        .menu-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
+        }
+        
+        .menu-icon {
+            width: 24px;
+            height: 2px;
+            background: white;
+            position: relative;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+        
+        .menu-icon::before,
+        .menu-icon::after {
+            content: '';
+            width: 24px;
+            height: 2px;
+            background: white;
+            position: absolute;
+            left: 0;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+        
+        .menu-icon::before {
+            top: -6px;
+        }
+        
+        .menu-icon::after {
+            top: 6px;
+        }
+        
+        .menu-toggle.active {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .menu-toggle.active .menu-icon {
+            background: transparent;
+            opacity: 0;
+        }
+        
+        .menu-toggle.active .menu-icon::before,
+        .menu-toggle.active .menu-icon::after {
+            opacity: 0;
+        }
+        
+        .collapsible-menu {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 50px;
+            background: rgba(5, 10, 30, 0.75);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            z-index: 99;
+            transition: width 0.4s ease;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+        
+        .collapsible-menu.expanded {
+            width: calc(100vw * 0.67);
+            max-width: 800px;
+        }
+        
+        .menu-items {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-left: 70px; /* 增加左边距，为按钮留出空间 */
+            gap: 1px;
+        }
+        
+        .menu-item {
+            padding: 10px 20px;
+            background: rgba(0, 240, 255, 0.08);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            font-weight: 700;
+            color: white;
+            border: 1px solid transparent;
+            animation: flicker 15s infinite;
+        }
+        
+        .menu-item:hover {
+            background: rgba(0, 240, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: rgba(0, 240, 255, 0.4);
+            color: var(--primary-color);
+        }
+        
+        /* 折叠菜单响应式优化 */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 45px;
+                height: 45px;
+            }
+            
+            .collapsible-menu {
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                height: 45px;
+            }
+            
+            .menu-items {
+                margin-left: 15px;
+                gap: 0;
+            }
+            
+            .menu-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .menu-toggle {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .collapsible-menu {
+                height: 40px;
+            }
+            
+            .menu-icon,
+            .menu-icon::before,
+            .menu-icon::after {
+                width: 20px;
+            }
+            
+            .menu-item {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* 按钮文本响应式优化 */
+        @media (max-width: 768px) {
+            .button-text {
+                font-size: 1.2rem;
+                padding: 0 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .button-text {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="title-container" class="title-container">
+        <div class="title">
+            <span class="main-title">精准出击，智选未来</span>
+            <br>
+            <span class="sub-title">—— 皓月 3.0 量化选股器</span>
+        </div>
+    </div>
+
+    <!-- 卡密验证弹窗 -->
+    <div id="license-modal" class="modal hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="modal-content bg-gray-900 border border-cyan-500 rounded-lg p-8 max-w-md w-full">
+            <h2 class="text-2xl font-bold text-center text-cyan-400 mb-6">激活高级功能</h2>
+            <p class="text-gray-300 mb-4">请输入有效的卡密以解除选股限制</p>
+            <input type="text" id="license-key" class="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="请输入卡密">
+            <div class="flex gap-4">
+                <button id="activate-btn" class="flex-1 bg-gradient-to-r from-cyan-500 to-green-500 text-white font-bold py-2 px-4 rounded-md hover:opacity-90 transition-opacity">
+                    激活
+                </button>
+                <button id="cancel-activate-btn" class="flex-1 bg-gray-700 text-white font-bold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors">
+                    取消
+                </button>
+            </div>
+            <p id="license-message" class="mt-4 text-center text-sm text-red-500 hidden"></p>
+        </div>
+    </div>
+
+    <!-- 主按钮容器，用于放置按钮和粒子流Canvas -->
+    <div class="btn-container">
+        <!-- 粒子流Canvas -->
+        <canvas id="loadingCanvas"></canvas>
+        <!-- 主按钮 -->
+        <div id="main-button">
+            <span class="button-text">开始选股</span>
+        </div>
+        <!-- 进度指示器 -->
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="progress-ring"></div>
+            <div class="loading-text">数据处理中...</div>
+        </div>
+    </div>
+    
+    <!-- 加载动画 -->
+    <div id="loading-container" class="loading-container glass-effect p-8 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 hidden flex flex-col items-center justify-center">
+        <div class="loading-spinner w-16 h-16 border-4 border-t-cyan-400 border-r-cyan-300 border-b-green-400 border-l-green-300 rounded-full animate-spin mb-4"></div>
+        <div class="loading-text text-xl font-bold mb-4">正在分析市场数据...</div>
+        <div class="loading-progress w-64">
+            <div class="loading-progress-bar h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div class="loading-progress-fill h-full bg-gradient-to-r from-cyan-400 to-green-400 rounded-full w-0 transition-all duration-300"></div>
+            </div>
+            <div class="loading-progress-text text-center mt-2 text-sm">0%</div>
+        </div>
+    </div>
+    
+    <div id="result-container">
+        <div class="stock-code" id="selected-stock">600519</div>
+        <div class="stock-info">
+            <div class="stock-metric price-up">+5.67%</div>
+            <div class="stock-metric">PE: 32.5</div>
+            <div class="stock-metric">ROE: 25.8%</div>
+        </div>
+    </div>
+    
+    <!-- 折叠菜单 -->
+    <button class="menu-toggle" id="menu-toggle">
+        <div class="menu-icon"></div>
+    </button>
+    <div class="collapsible-menu" id="collapsible-menu">
+        <ul class="menu-items">
+            <li class="menu-item">免费福利</li>
+            <li class="menu-item">皓月</li>
+            <li class="menu-item">量化指标</li>
+            <li class="menu-item">联合机构</li>
+            <li class="menu-item">声明</li>
+        </ul>
+    </div>
+    
+    <div class="control-btn" id="sound-btn">
+        <i class="fas fa-volume-up"></i> 音效
+    </div>
+    
+    <div class="control-btn" id="fullscreen-btn">
+        <i class="fas fa-expand"></i> 全屏
+    </div>
+
+    <script>
+        // 初始化Three.js场景
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x050a1e, 1);
+        container.appendChild(renderer.domElement);
+        
+        // 添加环境光
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        // 添加点光源
+        const pointLight1 = new THREE.PointLight(0x00f0ff, 1, 100);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0xff2a6d, 1, 100);
+        pointLight2.position.set(-10, -10, 10);
+        scene.add(pointLight2);
+        
+        const pointLight3 = new THREE.PointLight(0x05ffa1, 1, 100);
+        pointLight3.position.set(0, 10, -10);
+        scene.add(pointLight3);
+        
+        // 相机位置
+        camera.position.z = 30;
+        
+        // 粒子系统 - 优化性能
+            const particles = [];
+            const particleCount = 1000; // 减少粒子数量以提高性能
+        
+        // 创建粒子几何体
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.1,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        
+        // 初始化粒子位置
+        const posArray = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 20;
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        
+        // 创建粒子系统
+        const particlesSystem = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesSystem);
+        
+        // 动画状态
+        let animationState = 'idle'; // idle, gathering, selecting, showing
+        
+        // 主按钮点击事件
+        document.getElementById('main-button').addEventListener('click', startSelection);
+        
+        // 粒子动画逻辑
+        function startParticleAnimation(onInitialized) {
+            // 获取DOM元素
+            const mainButton = document.getElementById('main-button');
+            const loadingCanvas = document.getElementById('loadingCanvas');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            // 适配Canvas尺寸 - 扩大动画区域
+            function resizeCanvas() {
+                // 扩大Canvas尺寸为视口的80%，使动画效果更舒展
+                const expandedSize = Math.min(window.innerWidth, window.innerHeight) * 0.8;
+                loadingCanvas.width = expandedSize;
+                loadingCanvas.height = expandedSize;
+                
+                // 重新定位Canvas使其居中
+                loadingCanvas.style.left = '50%';
+                loadingCanvas.style.top = '50%';
+                loadingCanvas.style.transform = 'translate(-50%, -50%)';
+            }
+            resizeCanvas();
+            
+            // 获取Canvas上下文
+            const ctx = loadingCanvas.getContext('2d');
+            const centerX = loadingCanvas.width / 2;
+            const centerY = loadingCanvas.height / 2;
+            
+            // 初始化粒子
+            const particles = [];
+            const particleCount = 80; // 粒子数量
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: centerX,
+                    y: centerY,
+                    size: Math.random() * 3 + 1, // 粒子大小
+                    speedX: (Math.random() - 0.5) * 4, // 水平速度
+                    speedY: (Math.random() - 0.5) * 4, // 垂直速度
+                    color: `rgba(0, 240, 255, ${Math.random() * 0.5 + 0.5})` // 半透青绿色
+                });
+            }
+            
+            // 显示Canvas和加载指示器
+            loadingCanvas.style.opacity = 1;
+            loadingIndicator.style.display = 'flex';
+            
+            // 如果提供了回调函数，调用它通知初始化完成
+            if (typeof onInitialized === 'function') {
+                setTimeout(onInitialized, 10); // 短暂延迟确保UI更新
+            }
+            
+            // 动画循环
+            function animate() {
+                ctx.clearRect(0, 0, loadingCanvas.width, loadingCanvas.height);
+                
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    // 更新位置
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    // 绘制粒子
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 粒子边界检测：飞出后重置到中心，形成循环流动
+                    if (p.x < 0 || p.x > loadingCanvas.width || p.y < 0 || p.y > loadingCanvas.height) {
+                        p.x = centerX;
+                        p.y = centerY;
+                        p.speedX = (Math.random() - 0.5) * 4;
+                        p.speedY = (Math.random() - 0.5) * 4;
+                    }
+                }
+                
+                // 只有在animationState为gathering状态时才继续动画
+                if (animationState === 'gathering') {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 隐藏Canvas和加载指示器
+                    loadingCanvas.style.opacity = 0;
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+            animate();
+        }
+        
+        // 开始选股流程
+        function startSelection() {
+            if (animationState !== 'idle') return;
+            
+            // 检查是否是新用户首次选股
+            const hasSelectedBefore = localStorage.getItem('hasSelectedBefore') === 'true';
+            
+            // 新用户首次选股无需卡密
+            if (!hasSelectedBefore) {
+                // 标记用户已选股
+                localStorage.setItem('hasSelectedBefore', 'true');
+                
+                // 确保股票数据已加载
+                if (!stockDataCollection.length) {
+                    alert('股票数据尚未加载完成，请稍候再试');
+                    return;
+                }
+                
+                // 隐藏标题容器
+                document.getElementById('title-container').classList.add('title-hidden');
+                
+                animationState = 'gathering';
+                // 启动粒子动画，在初始化完成后隐藏主按钮
+                startParticleAnimation(function() {
+                    document.getElementById('main-button').style.display = 'none';
+                });
+                
+                // 显示加载动画
+                const loadingContainer = document.getElementById('loading-container');
+                loadingContainer.style.display = 'flex';
+                
+                // 模拟加载进度
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        
+                        // 进度完成后隐藏加载动画并开始粒子汇聚动画
+                        setTimeout(() => {
+                            loadingContainer.style.display = 'none';
+                            
+                            // 粒子汇聚动画
+                            anime({
+                                targets: particlesGeometry.attributes.position.array,
+                                duration: 3000,
+                                easing: 'easeInOutQuad',
+                                update: function(anim) {
+                                    for (let i = 0; i < particleCount; i++) {
+                                        // 计算六边形位置
+                                        const angle = (i % 6) * Math.PI / 3;
+                                        const radius = 2;
+                                        const x = radius * Math.cos(angle);
+                                        const y = radius * Math.sin(angle);
+                                        const z = 0;
+                                        
+                                        // 更新粒子位置
+                                        particlesGeometry.attributes.position.array[i * 3] = x;
+                                        particlesGeometry.attributes.position.array[i * 3 + 1] = y;
+                                        particlesGeometry.attributes.position.array[i * 3 + 2] = z;
+                                    }
+                                    particlesGeometry.attributes.position.needsUpdate = true;
+                                },
+                                complete: function() {
+                                    startDataStorm();
+                                }
+                            });
+                        }, 500);
+                    }
+                    
+                    // 更新进度条
+                    document.querySelector('.loading-progress-fill').style.width = progress + '%';
+                    document.querySelector('.loading-progress-text').textContent = Math.round(progress) + '%';
+                }, 200);
+                
+                // 播放音效
+                if (soundEnabled) {
+                    playSelectionSound();
+                }
+                
+                return;
+            }
+            
+            // 检查是否已激活
+            const isActivated = localStorage.getItem('isActivated') === 'true';
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const activationDate = localStorage.getItem('activationDate');
+            const activatedIp = localStorage.getItem('activatedIp');
+            
+            // 获取当前IP（模拟，实际环境中应使用真实IP）
+            const currentIp = getClientIp();
+            
+            // 管理员用户不受任何限制
+            if (isAdmin) {
+                // 确保股票数据已加载
+                if (!stockDataCollection.length) {
+                    alert('股票数据尚未加载完成，请稍候再试');
+                    return;
+                }
+                
+                // 隐藏标题容器
+                document.getElementById('title-container').classList.add('title-hidden');
+                
+                animationState = 'gathering';
+                // 启动粒子动画，在初始化完成后隐藏主按钮
+                startParticleAnimation(function() {
+                    document.getElementById('main-button').style.display = 'none';
+                });
+                
+                // 显示加载动画
+                const loadingContainer = document.getElementById('loading-container');
+                loadingContainer.style.display = 'flex';
+                
+                // 模拟加载进度
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(progressInterval);
+                        
+                        // 进度完成后隐藏加载动画并开始粒子汇聚动画
+                        setTimeout(() => {
+                            loadingContainer.style.display = 'none';
+                            
+                            // 粒子汇聚动画
+                            anime({
+                                targets: particlesGeometry.attributes.position.array,
+                                duration: 3000,
+                                easing: 'easeInOutQuad',
+                                update: function(anim) {
+                                    for (let i = 0; i < particleCount; i++) {
+                                        // 计算六边形位置
+                                        const angle = (i % 6) * Math.PI / 3;
+                                        const radius = 2;
+                                        const x = radius * Math.cos(angle);
+                                        const y = radius * Math.sin(angle);
+                                        const z = 0;
+                                        
+                                        // 更新粒子位置
+                                        particlesGeometry.attributes.position.array[i * 3] = x;
+                                        particlesGeometry.attributes.position.array[i * 3 + 1] = y;
+                                        particlesGeometry.attributes.position.array[i * 3 + 2] = z;
+                                    }
+                        particlesGeometry.attributes.position.needsUpdate = true;
+                      },
+                      complete: function() {
+                        startDataStorm();
+                      }
+                    });
+                  }, 500);
+                }
+                
+                // 更新进度条
+                document.querySelector('.loading-progress-fill').style.width = progress + '%';
+                document.querySelector('.loading-progress-text').textContent = Math.round(progress) + '%';
+              }, 200);
+              
+              // 播放音效
+              if (soundEnabled) {
+                playSelectionSound();
+              }
+              
+              return;
+            }
+            
+            // 非管理员用户需要验证激活状态
+            if (!isActivated || activatedIp !== currentIp) {
+                // 显示卡密验证弹窗
+                document.getElementById('license-modal').classList.remove('hidden');
+                return;
+            }
+            
+            // 确保股票数据已加载
+            if (!stockDataCollection.length) {
+                alert('股票数据尚未加载完成，请稍候再试');
+                return;
+            }
+            
+            // 隐藏标题容器
+            document.getElementById('title-container').classList.add('title-hidden');
+            
+            animationState = 'gathering';
+            // 启动粒子动画，在初始化完成后隐藏主按钮
+            startParticleAnimation(function() {
+                document.getElementById('main-button').style.display = 'none';
+            });
+            
+            // 显示加载动画
+            const loadingContainer = document.getElementById('loading-container');
+            loadingContainer.style.display = 'flex';
+            
+            // 模拟加载进度
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // 进度完成后隐藏加载动画并开始粒子汇聚动画
+                    setTimeout(() => {
+                        loadingContainer.style.display = 'none';
+                        
+                        // 粒子汇聚动画
+                        anime({
+                            targets: particlesGeometry.attributes.position.array,
+                            duration: 3000,
+                            easing: 'easeInOutQuad',
+                            update: function(anim) {
+                                for (let i = 0; i < particleCount; i++) {
+                                    // 计算六边形位置
+                                    const angle = (i % 6) * Math.PI / 3;
+                                    const radius = 2;
+                                    const x = radius * Math.cos(angle);
+                                    const y = radius * Math.sin(angle);
+                                    const z = 0;
+                                    
+                                    // 更新粒子位置
+                                    particlesGeometry.attributes.position.array[i * 3] = x;
+                                    particlesGeometry.attributes.position.array[i * 3 + 1] = y;
+                                    particlesGeometry.attributes.position.array[i * 3 + 2] = z;
+                                }
+                        particlesGeometry.attributes.position.needsUpdate = true;
+                            },
+                            complete: function() {
+                                startDataStorm();
+                            }
+                        });
+                    }, 500);
+                }
+                
+                // 更新进度条
+                document.querySelector('.loading-progress-fill').style.width = progress + '%';
+                document.querySelector('.loading-progress-text').textContent = Math.round(progress) + '%';
+            }, 200);
+            
+            // 播放音效
+            if (soundEnabled) {
+                playSelectionSound();
+            }
+        }
+        
+        // 全局变量存储股票数据
+        let stockDataCollection = [];
+        let stockSelector = null;
+        
+        // 加载股票数据 - 优化版
+        function loadStockData() {
+            const loadingContainer = document.getElementById('loading-container');
+            loadingContainer.style.display = 'flex';
+            
+            // 尝试从缓存加载数据
+            const cachedData = localStorage.getItem('stockDataCache');
+            if (cachedData) {
+                try {
+                    const parsedData = JSON.parse(cachedData);
+                    // 检查缓存是否在过去15分钟内
+                    if (Date.now() - parsedData.timestamp < 15 * 60 * 1000) {
+                        stockDataCollection = parsedData.data;
+                        initStockSelector();
+                        loadingContainer.style.display = 'none';
+                        document.getElementById('main-button').style.display = 'flex';
+                        console.log('股票数据已从缓存加载');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('加载缓存数据失败:', error);
+                }
+            }
+            
+            // 尝试通过Tushare API加载数据
+            if (window.TushareAPI && window.TushareAPI.isAvailable) {
+                window.TushareAPI.loadStockDataFromJSON()
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            processLoadedStockData(data);
+                        } else {
+                            // API数据加载失败或为空，使用本地文件
+                            console.log('Tushare API数据为空或加载失败，使用本地stock_data.json');
+                            loadLocalStockData();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading data from Tushare API:', error);
+                        console.log('使用本地stock_data.json');
+                        loadLocalStockData();
+                    });
+            } else {
+                // Tushare API不可用，使用本地文件
+                loadLocalStockData();
+            }
+        }
+        
+        // 从本地文件加载股票数据
+        function loadLocalStockData() {
+            const loadingContainer = document.getElementById('loading-container');
+            
+            fetch('stock_data.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    processLoadedStockData(data);
+                })
+                .catch(error => {
+                    console.error('Error loading stock data:', error);
+                    alert('加载股票数据失败，请刷新页面重试');
+                    loadingContainer.style.display = 'none';
+                });
+        }
+        
+        // 处理加载的股票数据
+        function processLoadedStockData(data) {
+            // 过滤和清洗数据
+            stockDataCollection = data.filter(stock => {
+                return stock && stock.code && stock.name && stock.name !== '未知股票';
+            });
+            
+            // 缓存数据
+            try {
+                localStorage.setItem('stockDataCache', JSON.stringify({
+                    data: stockDataCollection,
+                    timestamp: Date.now()
+                }));
+            } catch (error) {
+                console.warn('缓存数据失败:', error);
+            }
+            
+            // 初始化选股器
+            initStockSelector();
+            
+            // 隐藏加载容器
+            document.getElementById('loading-container').style.display = 'none';
+            
+            // 显示主按钮
+            document.getElementById('main-button').style.display = 'flex';
+        }
+        
+        // 初始化选股器
+        function initStockSelector() {
+            if (window.StockSelector && stockDataCollection.length > 0) {
+                stockSelector = new StockSelector(stockDataCollection);
+                console.log('高级选股器初始化完成');
+            }
+        }
+        
+        // 显示选股器简介
+        function showIntroduction() {
+            const introSection = document.getElementById('intro-section');
+            if (!introSection) return; // 如果元素不存在，直接返回
+            
+            const introContent = introSection.querySelector('.intro-content');
+            const introButton = introSection.querySelector('.intro-button');
+            if (!introContent || !introButton) return;
+            
+            introSection.style.display = 'block';
+            introSection.style.opacity = '0.5'; // 设置透明度为50%
+            introSection.style.height = 'auto';
+            
+            // 默认展开状态
+            introContent.style.display = 'block';
+            introButton.style.display = 'none';
+            
+            // 添加点击折叠功能
+            introSection.addEventListener('click', function() {
+                if (introContent.style.display === 'block') {
+                    // 折叠到侧边为按钮
+                    introSection.style.width = '60px';
+                    introSection.style.height = '60px';
+                    introSection.style.borderRadius = '8px';
+                    introSection.style.transition = 'all 0.3s ease';
+                    introSection.style.display = 'flex';
+                    introSection.style.alignItems = 'center';
+                    introSection.style.justifyContent = 'center';
+                    
+                    introContent.style.display = 'none';
+                    introButton.style.display = 'block';
+                } else {
+                    // 展开
+                    introSection.style.width = '320px'; // 原来的w-80(320px)
+                    introSection.style.height = 'auto';
+                    introSection.style.borderRadius = '0';
+                    introSection.style.transition = 'all 0.3s ease';
+                    introSection.style.display = 'block';
+                    
+                    introContent.style.display = 'block';
+                    introButton.style.display = 'none';
+                }
+            });
+        }
+        
+        // 页面加载完成后加载股票数据
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStockData();
+            // setTimeout(showIntroduction, 2000); // 延迟显示简介（已移除）
+        });
+
+        // 数据风暴阶段 - 增强版数据清洗动画
+        function startDataStorm() {
+            if (!stockDataCollection.length) {
+                console.warn('股票数据尚未加载完成');
+                return;
+            }
+            
+            animationState = 'dataStorm';
+            
+            // 添加数据清洗动画的幻方效果
+            createDataCleaningEffect();
+            
+            // 选择股票 - 使用短期突破选股策略
+            let selectedStock = null;
+            
+            if (window.stockSelector) {
+                // 尝试使用高级选股器的短期突破选股策略
+                const selectedStocks = stockSelector.selectStocksForBreakout(1);
+                selectedStock = selectedStocks.length > 0 ? selectedStocks[0] : null;
+                
+                // 获取选股建议
+                if (selectedStock) {
+                    const advice = stockSelector.getInvestmentAdvice(selectedStock);
+                    selectedStock.advice = advice;
+                }
+            } else {
+                // 回退到原始选股方法
+                selectedStock = selectStockForShortTermGrowth();
+            }
+            
+            // 如果没有找到合适的股票，显示提示并重置
+            if (!selectedStock) {
+                alert('没有找到合适的股票数据，请刷新页面重试');
+                resetSelection();
+                return;
+            }
+            
+            // 使用包含选中股票的数组
+            const filteredStocks = [selectedStock];
+            
+            const codeCubes = [];
+            
+            filteredStocks.forEach((stock, index) => {
+                const geometry = new THREE.BoxGeometry(3, 3, 3);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00f0ff,
+                    emissive: 0x00f0ff,
+                    emissiveIntensity: 0.5,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const cube = new THREE.Mesh(geometry, material);
+                
+                // 随机位置
+                cube.position.x = (Math.random() - 0.5) * 30;
+                cube.position.y = (Math.random() - 0.5) * 30;
+                cube.position.z = (Math.random() - 0.5) * 30;
+                
+                scene.add(cube);
+                codeCubes.push(cube);
+                
+                // 添加文字
+                const loader = new THREE.FontLoader();
+                loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+                    const textGeometry = new THREE.TextGeometry(stock.code, {
+                        font: font,
+                        size: 0.5,
+                        height: 0.1
+                    });
+                    
+                    const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                    textMesh.position.z = 1.6;
+                    cube.add(textMesh);
+                });
+            });
+            
+            // 数据风暴动画
+            anime({
+                targets: codeCubes,
+                duration: 2000,
+                easing: 'easeInOutQuad',
+                update: function(anim) {
+                    codeCubes.forEach(cube => {
+                        // 向中心汇聚
+                        cube.position.x *= 0.95;
+                        cube.position.y *= 0.95;
+                        cube.position.z *= 0.95;
+                        
+                        // 旋转
+                        cube.rotation.x += 0.01;
+                        cube.rotation.y += 0.01;
+                    });
+                },
+                complete: function() {
+                    startFiltering(codeCubes);
+                }
+            });
+        }
+        
+        // 筛选阶段
+        function startFiltering(cubes) {
+            animationState = 'filtering';
+            
+            // 创建3个筛选环
+            const rings = [];
+            const ringColors = [0xff2a6d, 0x00f0ff, 0x05ffa1];
+            
+            for (let i = 0; i < 3; i++) {
+                const ringGeometry = new THREE.TorusGeometry(5, 0.2, 16, 100);
+                const ringMaterial = new THREE.MeshPhongMaterial({
+                    color: ringColors[i],
+                    emissive: ringColors[i],
+                    emissiveIntensity: 0.5,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.position.z = -10 + i * 10;
+                scene.add(ring);
+                rings.push(ring);
+            }
+            
+            // 筛选动画
+            let remainingCubes = [...cubes];
+            
+            const filterInterval = setInterval(() => {
+                // 旋转环
+                rings.forEach(ring => {
+                    ring.rotation.x += 0.02;
+                    ring.rotation.y += 0.02;
+                });
+                
+                // 移动立方体穿过环
+                remainingCubes.forEach(cube => {
+                    cube.position.z -= 0.2;
+                    
+                    // 随机筛选
+                    if (Math.random() > 0.7 && remainingCubes.length > 5) {
+                        scene.remove(cube);
+                        remainingCubes = remainingCubes.filter(c => c !== cube);
+                        
+                        // 爆炸效果
+                        explodeCube(cube);
+                    }
+                });
+                
+                // 结束条件
+                if (remainingCubes.length <= 5 || remainingCubes.every(cube => cube.position.z < -30)) {
+                    clearInterval(filterInterval);
+                    rings.forEach(ring => scene.remove(ring));
+                    startFinalSelection(remainingCubes);
+                }
+            }, 50);
+        }
+        
+        // 立方体爆炸效果
+        function explodeCube(cube) {
+            const explosionParticles = [];
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+                const material = new THREE.MeshPhongMaterial({
+                    color: cube.material.color,
+                    emissive: cube.material.color,
+                    emissiveIntensity: 0.5
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(cube.position);
+                
+                // 随机方向
+                particle.userData.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+                
+                scene.add(particle);
+                explosionParticles.push(particle);
+            }
+            
+            // 爆炸动画
+            const explosionDuration = 1000;
+            const startTime = Date.now();
+            
+            const animateExplosion = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / explosionDuration;
+                
+                if (progress >= 1) {
+                    explosionParticles.forEach(p => scene.remove(p));
+                    return;
+                }
+                
+                explosionParticles.forEach(particle => {
+                    particle.position.x += particle.userData.velocity.x;
+                    particle.position.y += particle.userData.velocity.y;
+                    particle.position.z += particle.userData.velocity.z;
+                    particle.material.opacity = 1 - progress;
+                });
+                
+                requestAnimationFrame(animateExplosion);
+            };
+            
+            animateExplosion();
+        }
+        
+        // 最终选择阶段
+        function startFinalSelection(cubes) {
+            animationState = 'finalSelection';
+            
+            // 排列剩余立方体在圆形轨道上
+            cubes.forEach((cube, i) => {
+                const angle = (i / cubes.length) * Math.PI * 2;
+                const radius = 10;
+                
+                gsap.to(cube.position, {
+                    x: radius * Math.cos(angle),
+                    y: radius * Math.sin(angle),
+                    z: 0,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+            });
+            
+            // 获取每个立方体对应的股票代码
+            const stockCubes = cubes.map(cube => {
+                let code = '';
+                if (cube && cube.children && cube.children.length > 0) {
+                    const textMesh = cube.children[0];
+                    if (textMesh && textMesh.geometry && textMesh.geometry instanceof THREE.TextGeometry) {
+                        code = textMesh.geometry.parameters.text;
+                    }
+                }
+                return { cube, code };
+            }).filter(item => item.code); // 过滤出有效的股票代码
+            
+            // 为每个立方体计算评分
+            const scoredCubes = stockCubes.map(item => {
+                const stock = stockDataCollection.find(s => s.code === item.code);
+                let score = 0;
+                if (stock) {
+                    // 使用与selectStockForShortTermGrowth相同的评分算法
+                    score = stock.priceChange * 0.4 + stock.turnoverRate * 0.3 + stock.amount * 0.3;
+                }
+                return { ...item, score };
+            });
+            
+            // 按评分排序，选出最高分的立方体
+            scoredCubes.sort((a, b) => b.score - a.score);
+            
+            // 防止scoredCubes为空数组时访问undefined的cube属性
+            let bestCube = null;
+            if (scoredCubes.length > 0) {
+                bestCube = scoredCubes[0].cube;
+            } else {
+                // 如果没有有效的立方体，创建一个临时立方体作为默认值
+                if (cubes.length > 0) {
+                    bestCube = cubes[0];
+                }
+            }
+            
+            // 延迟显示结果，以便用户看到动画效果
+            setTimeout(() => {
+                // 对其他立方体添加爆炸效果
+                cubes.forEach(cube => {
+                    if (cube !== bestCube) {
+                        scene.remove(cube);
+                        explodeCube(cube);
+                    }
+                });
+                
+                // 显示最佳结果
+                setTimeout(() => {
+                    showResult(bestCube);
+                }, 1000);
+            }, 2000);
+        }
+        
+        // 显示最终结果
+        function showResult(cube) {
+            animationState = 'showingResult';
+            
+            // 获取股票代码
+            let stockCode = 'bj430017'; // 默认值，但会被实际选择的股票覆盖
+            
+            // 尝试从立方体获取股票代码
+            if (cube && cube.children && cube.children.length > 0) {
+                const textMesh = cube.children[0];
+                if (textMesh && textMesh.geometry && textMesh.geometry instanceof THREE.TextGeometry) {
+                    const cubeStockCode = textMesh.geometry.parameters.text;
+                    // 验证获取的代码是否有效
+                    if (cubeStockCode && cubeStockCode.length > 0) {
+                        stockCode = cubeStockCode;
+                    }
+                }
+            }
+            
+            // 双重验证：确保股票代码在数据集中存在
+            const validCodes = stockDataCollection.map(stock => stock.code);
+            if (!validCodes.includes(stockCode)) {
+                // 如果代码无效，使用数据集中第一个股票的代码
+                if (validCodes.length > 0) {
+                    stockCode = validCodes[0];
+                }
+            }
+            
+            // 获取股票详细信息
+            const stock = getStockDetails(stockCode);
+            
+            // 显示结果容器
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.style.display = 'block';
+            
+            // 播放结果音效
+            if (soundEnabled) {
+                playResultSound();
+            }
+            
+            // 清空结果容器内容
+            while (resultContainer.children.length > 2) {
+                resultContainer.removeChild(resultContainer.children[2]);
+            }
+            
+            // 创建选股结果卡片
+            const resultCard = document.createElement('div');
+            resultCard.className = 'bg-white/10 backdrop-blur-md p-4 rounded-lg shadow-xl w-full max-w-xl mx-auto';
+            resultContainer.appendChild(resultCard);
+            
+            // 股票代码和名称
+            const stockHeader = document.createElement('div');
+            stockHeader.className = 'text-2xl font-bold mb-4 border-b border-white/20 pb-2';
+            stockHeader.textContent = `${stock.code} ${stock.name}`;
+            resultCard.appendChild(stockHeader);
+            
+            // 个股板块
+            const industrySection = document.createElement('div');
+            industrySection.className = 'mb-4';
+            const displayIndustry = stock.industry && stock.industry !== '未知' ? stock.industry : '金融科技'; // 如果行业是未知，显示默认行业
+            industrySection.innerHTML = `
+                <div class="text-sm opacity-80">个股板块</div>
+                <div class="text-lg mt-1">${displayIndustry}</div>
+            `;
+            resultCard.appendChild(industrySection);
+            
+            // 股票基本数据
+            const basicDataSection = document.createElement('div');
+            basicDataSection.className = 'grid grid-cols-2 md:grid-cols-4 gap-4 mb-6';
+            
+            const changeClass = stock.priceChange >= 0 ? 'price-up' : 'price-down';
+            const changeSign = stock.priceChange >= 0 ? '+' : '';
+            
+            addStockMetric(basicDataSection, `${changeSign}${stock.priceChange.toFixed(2)}%`, changeClass);
+            addStockMetric(basicDataSection, `价格: ¥${stock.price.toFixed(2)}`);
+            addStockMetric(basicDataSection, `PE: ${stock.pe.toFixed(1)}`);
+            addStockMetric(basicDataSection, `ROE: ${stock.roe.toFixed(1)}%`);
+            
+            resultCard.appendChild(basicDataSection);
+            
+            // 建仓逻辑（短期突破策略）
+            const strategySection = document.createElement('div');
+            strategySection.className = 'mb-6';
+            strategySection.innerHTML = `
+                <div class="text-lg font-semibold mb-2">建仓逻辑（短期突破策略）</div>
+                <div class="text-sm bg-white/5 p-4 rounded">
+                    <p class="mb-2"><span style="color: #00f0ff;">要素一：价格态势 - 爆发前夜</span></p>
+                    <p>• 过去10日平均真实波幅显著低于过去60日平均波幅的70%，表明波动收缩，蓄势待发</p>
+                    <p class="mt-2"><span style="color: #05ffa1;">要素二：动能确认 - 资金流入</span></p>
+                    <p>• 最近3-5个交易日平均成交量较前5-10个交易日显著放大，有资金悄然建仓</p>
+                    <p>• 股价已成功站上5日均线和10日均线，短期趋势转向多头</p>
+                    <p class="mt-2"><span style="color: #ff2a6d;">要素三：突破信号 - 总攻号角</span></p>
+                    <p>• 当日收盘价成功突破20日最高价的关键阻力位，且突破幅度超过1%</p>
+                    <p>• 当日成交量达到过去20个交易日平均成交量的2倍以上，量价配合完美</p>
+                </div>
+            `;
+            resultCard.appendChild(strategySection);
+            
+            // 近期利好因素（短期突破策略）
+            const positiveFactorsSection = document.createElement('div');
+            positiveFactorsSection.className = 'mb-6';
+            positiveFactorsSection.innerHTML = `
+                <div class="text-lg font-semibold mb-2">短期突破确认信号</div>
+                <div class="text-sm bg-white/5 p-4 rounded">
+                    <p>• <span style="color: #00f0ff;">突破强度</span>：突破关键阻力位幅度超过1.5%，显示强劲上行动能</p>
+                    <p>• <span style="color: #05ffa1;">量能配合</span>：成交量放大至20日均量2.5倍以上，主力资金大幅流入</p>
+                    <p>• <span style="color: #ff2a6d;">技术形态</span>：形成典型的"窄幅波动后突破"形态，胜率较高</p>
+                    <p>• <span style="color: #00f0ff;">风险控制</span>：建议在突破次日回踩支撑位时买入，设置3%止损位</p>
+                </div>
+            `;
+            resultCard.appendChild(positiveFactorsSection);
+            
+            // 添加提示文本替代重新选股按钮
+            const selectionLimitText = document.createElement('div');
+            selectionLimitText.className = 'mt-4 text-sm text-white/60 italic';
+            selectionLimitText.textContent = '市场有风险，投资需谨慎';
+            resultCard.appendChild(selectionLimitText);
+            
+            // 记录选股日期
+            const today = new Date().toDateString();
+            localStorage.setItem('lastSelectionDate', today);
+            
+            // 移除场景中的其他元素
+            scene.remove(cube);
+            particlesGeometry.dispose();
+            particlesMaterial.dispose();
+            scene.remove(particlesSystem);
+            
+            // 允许拖动旋转查看
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const deltaMove = {
+                    x: e.clientX - previousMousePosition.x,
+                    y: e.clientY - previousMousePosition.y
+                };
+                
+                camera.position.x += deltaMove.x * 0.01;
+                camera.position.y -= deltaMove.y * 0.01;
+                
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            container.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                isDragging = false;
+            });
+            
+            // 双击重新开始
+            container.addEventListener('dblclick', resetSelection);
+        }
+        
+        // 参数面板相关代码已移除，简化为单只股票选择模式
+        
+        // 增强版数据清洗动态效果
+        function createDataCleaningEffect() {
+            // 创建数据清洗过程的状态指示器
+            const dataProcessText = document.createElement('div');
+            dataProcessText.className = 'data-process-text';
+            dataProcessText.style.position = 'absolute';
+            dataProcessText.style.top = '50%';
+            dataProcessText.style.left = '50%';
+            dataProcessText.style.transform = 'translate(-50%, -50%)';
+            dataProcessText.style.color = 'white';
+            dataProcessText.style.fontSize = '24px';
+            dataProcessText.style.fontWeight = 'bold';
+            dataProcessText.style.zIndex = '100';
+            dataProcessText.style.opacity = '0';
+            dataProcessText.style.transition = 'opacity 0.5s ease';
+            dataProcessText.textContent = '数据加载中...';
+            document.body.appendChild(dataProcessText);
+            
+            // 数据处理状态更新函数
+            function updateDataProcessStatus(status) {
+                dataProcessText.textContent = status;
+                dataProcessText.style.opacity = '1';
+                
+                // 添加光晕效果
+                dataProcessText.style.textShadow = '0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00';
+                
+                setTimeout(() => {
+                    dataProcessText.style.opacity = '0';
+                    dataProcessText.style.textShadow = 'none';
+                }, 1500);
+            }
+            
+            // 创建幻方结构
+            const magicSquareSize = 8;
+            const cellSize = 1.5;
+            
+            // 创建幻方的网格线
+            const gridGeometry = new THREE.BufferGeometry();
+            const gridPoints = [];
+            const gridSize = magicSquareSize * cellSize;
+            
+            // 添加水平和垂直线
+            for (let i = 0; i <= magicSquareSize; i++) {
+                const pos = -gridSize/2 + i * cellSize;
+                
+                // 水平线
+                gridPoints.push(-gridSize/2, pos, 0);
+                gridPoints.push(gridSize/2, pos, 0);
+                
+                // 垂直线
+                gridPoints.push(pos, -gridSize/2, 0);
+                gridPoints.push(pos, gridSize/2, 0);
+            }
+            
+            gridGeometry.setAttribute('position', new THREE.Float32BufferAttribute(gridPoints, 3));
+            const gridMaterial = new THREE.LineBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.3 });
+            const gridLines = new THREE.LineSegments(gridGeometry, gridMaterial);
+            gridLines.position.z = -5;
+            scene.add(gridLines);
+            
+            // 添加强调线和效果
+            const highlightGeometry = new THREE.BufferGeometry();
+            const highlightPoints = [];
+            
+            // 主对角线
+            highlightPoints.push(-gridSize/2, -gridSize/2, 0);
+            highlightPoints.push(gridSize/2, gridSize/2, 0);
+            
+            // 副对角线
+            highlightPoints.push(gridSize/2, -gridSize/2, 0);
+            highlightPoints.push(-gridSize/2, gridSize/2, 0);
+            
+            highlightGeometry.setAttribute('position', new THREE.Float32BufferAttribute(highlightPoints, 3));
+            const highlightMaterial = new THREE.LineBasicMaterial({ color: 0x05ffa1, transparent: true, opacity: 0.7, linewidth: 2 });
+            const highlightLines = new THREE.LineSegments(highlightGeometry, highlightMaterial);
+            highlightLines.position.z = -4.9;
+            scene.add(highlightLines);
+            
+            // 创建数据流动粒子系统
+            const dataFlowParticles = [];
+            const dataParticleCount = 300;
+            const particleColors = {}; // 存储粒子的颜色状态
+            
+            for (let i = 0; i < dataParticleCount; i++) {
+                const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+                const isGreen = Math.random() > 0.5;
+                const color = isGreen ? 0x05ffa1 : 0x00f0ff;
+                const material = new THREE.MeshPhongMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.7,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.set(
+                    (Math.random() - 0.5) * gridSize,
+                    (Math.random() - 0.5) * gridSize,
+                    -5 + Math.random() * 2
+                );
+                
+                particle.userData.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.05,
+                    (Math.random() - 0.5) * 0.05,
+                    0
+                );
+                
+                particle.userData.isHighlighted = false;
+                particleColors[particle.uuid] = { baseColor: color, isHighlighted: false };
+                
+                scene.add(particle);
+                dataFlowParticles.push(particle);
+            }
+            
+            // 动画循环
+            const animateDataFlow = () => {
+                if (animationState !== 'dataStorm') {
+                    // 清除粒子和文本
+                    dataFlowParticles.forEach(p => scene.remove(p));
+                    scene.remove(gridLines);
+                    scene.remove(highlightLines);
+                    if (dataProcessText.parentNode) {
+                        dataProcessText.parentNode.removeChild(dataProcessText);
+                    }
+                    return;
+                }
+                
+                // 对角线呼吸效果
+                const time = Date.now() * 0.001;
+                const opacity = 0.5 + 0.3 * Math.sin(time);
+                highlightLines.material.opacity = opacity;
+                
+                dataFlowParticles.forEach(particle => {
+                    particle.position.x += particle.userData.velocity.x;
+                    particle.position.y += particle.userData.velocity.y;
+                    
+                    // 边界检测
+                    if (particle.position.x < -gridSize/2 || particle.position.x > gridSize/2) {
+                        particle.userData.velocity.x *= -1;
+                    }
+                    if (particle.position.y < -gridSize/2 || particle.position.y > gridSize/2) {
+                        particle.userData.velocity.y *= -1;
+                    }
+                    
+                    // 随机改变速度方向
+                    if (Math.random() < 0.01) {
+                        particle.userData.velocity.x = (Math.random() - 0.5) * 0.05;
+                        particle.userData.velocity.y = (Math.random() - 0.5) * 0.05;
+                    }
+                    
+                    // 粒子闪烁效果
+                    if (Math.random() < 0.02) {
+                        const isHighlighted = !particle.userData.isHighlighted;
+                        particle.userData.isHighlighted = isHighlighted;
+                        
+                        if (isHighlighted) {
+                            // 高亮状态
+                            particle.material.color.setHex(0xff2a6d);
+                            particle.material.emissive.setHex(0xff2a6d);
+                            particle.material.opacity = 1.0;
+                        } else {
+                            // 恢复基础颜色
+                            const colorInfo = particleColors[particle.uuid];
+                            particle.material.color.setHex(colorInfo.baseColor);
+                            particle.material.emissive.setHex(colorInfo.baseColor);
+                            particle.material.opacity = 0.8;
+                        }
+                    }
+                    
+                    // 根据选股进度动态调整粒子行为
+                    if (animationState === 'dataStorm' && Math.random() < 0.005) {
+                        // 随机将一些粒子变为红色（表示数据被过滤掉）
+                        particle.material.color.setHex(0xff2a6d);
+                        particle.material.emissive.setHex(0xff2a6d);
+                        particle.userData.velocity = new THREE.Vector3(
+                            0,
+                            0,
+                            -0.1 // 向屏幕外移动
+                        );
+                    }
+                });
+                
+                requestAnimationFrame(animateDataFlow);
+            };
+            
+            animateDataFlow();
+            
+            // 模拟数据处理阶段
+            setTimeout(() => updateDataProcessStatus('数据加载完成'), 500);
+            setTimeout(() => updateDataProcessStatus('特征提取中...'), 1500);
+            setTimeout(() => updateDataProcessStatus('构建量化模型...'), 2500);
+            setTimeout(() => updateDataProcessStatus('优化选股参数...'), 3500);
+        }
+        
+        // 根据短期上涨潜力选出单只股票
+        function selectStockForShortTermGrowth() {
+            // 筛选出信息齐全的股票
+            const validStocks = stockDataCollection.filter(stock => {
+                // 确保基本信息不为空
+                return stock.name && stock.name !== '未知股票' && 
+                       stock.industry && stock.industry !== '未知' &&
+                       stock.price > 0 &&
+                       typeof stock.priceChange === 'number' &&
+                       typeof stock.pe === 'number' && stock.pe > 0 &&
+                       typeof stock.roe === 'number' && stock.roe > 0 &&
+                       typeof stock.marketCap === 'number' && stock.marketCap > 0 &&
+                       typeof stock.volume === 'number' && stock.volume > 0 &&
+                       typeof stock.turnoverRate === 'number' && stock.turnoverRate > 0 &&
+                       typeof stock.pb === 'number' && stock.pb > 0;
+            });
+            
+            // 如果没有有效股票，返回默认值
+            if (validStocks.length === 0) {
+                console.warn('没有找到信息齐全的股票，使用原始数据排序');
+                const stocksCopy = [...stockDataCollection];
+                stocksCopy.sort((a, b) => {
+                    const scoreA = (a.priceChange || 0) * 0.4 + (a.turnoverRate || 0) * 0.3 + (a.volume || 0) * 0.3;
+                    const scoreB = (b.priceChange || 0) * 0.4 + (b.turnoverRate || 0) * 0.3 + (b.volume || 0) * 0.3;
+                    return scoreB - scoreA;
+                });
+                return stocksCopy[0] || null;
+            }
+            
+            // 复制有效数据以避免修改
+            const stocksCopy = [...validStocks];
+            
+            // 按照短期上涨潜力排序（主要基于涨跌幅和成交量变化）
+            stocksCopy.sort((a, b) => {
+                // 计算综合评分：涨跌幅(40%) + 换手率(30%) + 相对成交量(30%)
+                const scoreA = (a.priceChange * 0.4) + (a.turnoverRate * 0.3) + (a.volume * 0.3);
+                const scoreB = (b.priceChange * 0.4) + (b.turnoverRate * 0.3) + (b.volume * 0.3);
+                return scoreB - scoreA; // 降序排列
+            });
+            
+            // 返回评分最高的股票
+            return stocksCopy[0] || null;
+        }
+        
+        // 根据参数筛选股票
+        function filterStocksByParams(stocks, params) {
+            // 简化筛选逻辑，始终返回输入的股票数组
+            return stocks;
+        }
+
+        // 获取股票详细数据
+        function getStockDetails(code) {
+            // 查找匹配的股票
+            const foundStock = stockDataCollection.find(stock => stock.code === code);
+            
+            if (foundStock) {
+                // 返回找到的股票，但处理行业字段
+                return {
+                    ...foundStock,
+                    // 如果行业是"未知"或空，显示更有意义的行业名称
+                    industry: foundStock.industry && foundStock.industry !== '未知' ? foundStock.industry : '金融科技'
+                };
+            } else {
+                // 如果找不到，返回更有意义的默认值
+                return {
+                    code: code,
+                    name: '优质成长股',
+                    industry: '金融科技',
+                    price: 0,
+                    priceChange: 0,
+                    pe: 0,
+                    roe: 0,
+                    marketCap: 0,
+                    volume: 0,
+                    turnoverRate: 0,
+                    pb: 0
+                };
+            }
+        }
+
+        // 添加股票指标到DOM
+        function addStockMetric(parent, text, className = '') {
+            const metricElement = document.createElement('div');
+            metricElement.className = `stock-metric ${className}`;
+            metricElement.textContent = text;
+            parent.appendChild(metricElement);
+        }
+
+        // 重置选股流程 - 保留用于内部逻辑，用户界面不再提供重置按钮
+        function resetSelection() {
+            // 检查是否已激活
+            const isActivated = localStorage.getItem('isActivated') === 'true';
+            const activationDate = localStorage.getItem('activationDate');
+            const activatedIp = localStorage.getItem('activatedIp');
+            
+            // 获取当前IP
+            const currentIp = getClientIp();
+            
+            // 检查激活状态是否有效
+            if (!isActivated || activatedIp !== currentIp) {
+                // 显示卡密验证弹窗
+                document.getElementById('license-modal').classList.remove('hidden');
+                return;
+            }
+            
+            animationState = 'idle';
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.style.display = 'none';
+            
+            // 重置结果容器内容，保留基本结构
+            while (resultContainer.children.length > 2) {
+                resultContainer.removeChild(resultContainer.children[2]);
+            }
+            
+            // 清空股票信息
+            const stockInfoElement = resultContainer.querySelector('.stock-info');
+            while (stockInfoElement.firstChild) {
+                stockInfoElement.removeChild(stockInfoElement.firstChild);
+            }
+            
+            // 隐藏加载容器
+            const loadingContainer = document.getElementById('loading-container');
+            loadingContainer.style.display = 'none';
+            
+            // 显示标题容器
+            document.getElementById('title-container').classList.remove('title-hidden');
+            
+            // 显示主按钮
+            document.getElementById('main-button').style.display = 'flex';
+            // 简介区域已移除，不再显示
+            
+            // 重新初始化粒子
+            for (let i = 0; i < particleCount * 3; i++) {
+                particlesGeometry.attributes.position.array[i] = (Math.random() - 0.5) * 20;
+            }
+            particlesGeometry.attributes.position.needsUpdate = true;
+            
+            scene.add(particlesSystem);
+        }
+        
+        // 获取客户端IP（模拟）
+        function getClientIp() {
+            // 在实际环境中，这里应该使用真实的IP获取方法
+            // 此处使用一个基于时间和随机数的模拟IP
+            const now = new Date().getTime();
+            const random = Math.floor(Math.random() * 1000);
+            const ipHash = (now + random).toString(16).substr(0, 8);
+            return `192.168.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}_${ipHash}`;
+        }
+        
+        // 验证卡密
+        function validateLicenseKey(key) {
+            // 去除空格并转换为小写
+            const normalizedKey = key.trim().toLowerCase();
+            
+            // 超级管理卡密
+            if (normalizedKey === 'admin') {
+                return { valid: true, isAdmin: true };
+            }
+            
+            // 验证普通卡密格式：lianghuatozi1 到 lianghuatozi100
+            const pattern = /^lianghuatozi(\d{1,3})$/;
+            const match = normalizedKey.match(pattern);
+            
+            if (match) {
+                const number = parseInt(match[1], 10);
+                // 检查数字范围
+                if (number >= 1 && number <= 100) {
+                    return { valid: true, isAdmin: false };
+                }
+            }
+            
+            return { valid: false, isAdmin: false };
+        }
+        
+        // 保存激活信息
+        function saveActivationInfo(isAdmin) {
+            const today = new Date().toDateString();
+            const currentIp = getClientIp();
+            
+            localStorage.setItem('isActivated', 'true');
+            localStorage.setItem('activationDate', today);
+            localStorage.setItem('activatedIp', currentIp);
+            localStorage.setItem('isAdmin', isAdmin.toString());
+        }
+        
+        // 显示许可证信息
+        function showLicenseInfo() {
+            const isActivated = localStorage.getItem('isActivated') === 'true';
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const activationDate = localStorage.getItem('activationDate');
+            
+            // 如果未创建许可证信息元素，创建一个
+            let licenseInfoElement = document.querySelector('.license-info');
+            if (!licenseInfoElement) {
+                licenseInfoElement = document.createElement('div');
+                licenseInfoElement.className = 'license-info';
+                document.body.appendChild(licenseInfoElement);
+            }
+            
+            if (isActivated) {
+                const statusText = isAdmin ? '超级管理员' : '已激活';
+                licenseInfoElement.textContent = `${statusText} - 激活日期: ${activationDate}`;
+            } else {
+                licenseInfoElement.textContent = '未激活';
+            }
+        }
+        
+        // 卡密验证按钮事件
+        document.getElementById('activate-btn').addEventListener('click', function() {
+            const licenseKey = document.getElementById('license-key').value;
+            const licenseMessage = document.getElementById('license-message');
+            
+            const validation = validateLicenseKey(licenseKey);
+            
+            if (validation.valid) {
+                    // 保存激活信息
+                    saveActivationInfo(validation.isAdmin);
+                    
+                    // 显示成功消息
+                    licenseMessage.textContent = validation.isAdmin ? '超级管理员激活成功！您现在可以无限制使用所有功能。' : '激活成功！';
+                    licenseMessage.className = 'mt-4 text-center text-sm text-green-500';
+                    
+                    // 隐藏输入框和按钮，仅显示状态标签
+                    document.getElementById('license-key').style.display = 'none';
+                    document.getElementById('activate-btn').style.display = 'none';
+                    document.getElementById('cancel-activate-btn').style.display = 'none';
+                    
+                    // 延迟关闭弹窗
+                    setTimeout(() => {
+                        document.getElementById('license-modal').classList.add('hidden');
+                        
+                        // 对于超级管理员，彻底隐藏输入框和按钮
+                        if (validation.isAdmin) {
+                            document.getElementById('license-key').style.display = 'none';
+                            document.getElementById('activate-btn').style.display = 'none';
+                            document.getElementById('cancel-activate-btn').style.display = 'none';
+                            licenseMessage.style.display = 'none';
+                        } else {
+                            // 对于普通用户，恢复输入框和按钮的显示
+                            document.getElementById('license-key').style.display = 'block';
+                            document.getElementById('activate-btn').style.display = 'block';
+                            document.getElementById('cancel-activate-btn').style.display = 'block';
+                            licenseMessage.className = 'mt-4 text-center text-sm text-red-500 hidden';
+                        }
+                        
+                        // 显示许可证信息
+                        showLicenseInfo();
+                        
+                        // 如果是通过开始选股按钮触发的验证，则继续选股流程
+                        if (animationState === 'idle') {
+                            startSelection();
+                        }
+                    }, 1500);
+            } else {
+                // 显示错误消息
+                licenseMessage.textContent = '无效的卡密，请重新输入';
+                licenseMessage.className = 'mt-4 text-center text-sm text-red-500';
+            }
+        });
+        
+        // 取消激活按钮事件
+        document.getElementById('cancel-activate-btn').addEventListener('click', function() {
+            document.getElementById('license-modal').classList.add('hidden');
+            document.getElementById('license-message').className = 'mt-4 text-center text-sm text-red-500 hidden';
+        });
+        
+        // 初始化音效设置
+        let soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+        
+        // 初始化时检查激活状态
+        window.addEventListener('DOMContentLoaded', function() {
+            // 显示许可证信息
+            showLicenseInfo();
+        });
+        
+        // 播放音效
+        function playSound(frequency, duration, volume = 0.3) {
+            if (!soundEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        // 播放选股流程音效
+        function playSelectionSound() {
+            playSound(440, 0.5); // A4音符
+            setTimeout(() => playSound(554, 0.3), 300); // C#5音符
+            setTimeout(() => playSound(659, 0.7), 600); // E5音符
+        }
+        
+        // 播放筛选音效
+        function playFilterSound() {
+            playSound(330, 0.2); // E4音符
+        }
+        
+        // 播放结果音效
+        function playResultSound() {
+            playSound(523, 0.8, 0.5); // C5音符
+            setTimeout(() => playSound(659, 0.5, 0.4), 400); // E5音符
+            setTimeout(() => playSound(784, 1.2, 0.6), 900); // G5音符
+        }
+        
+        // 音效按钮
+        document.getElementById('sound-btn').addEventListener('click', () => {
+            if (!audioContext) {
+                initAudio();
+            }
+            
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('soundEnabled', soundEnabled.toString());
+            
+            const soundIcon = document.querySelector('#sound-btn i');
+            
+            if (soundEnabled) {
+                soundIcon.className = 'fas fa-volume-up';
+                playSound(440, 0.3); // 确认音效
+            } else {
+                soundIcon.className = 'fas fa-volume-mute';
+            }
+        });
+        
+        // 在选股流程中添加音效调用
+        // 增强startSelection函数
+        const originalStartSelection = startSelection;
+        startSelection = function() {
+            originalStartSelection();
+            if (soundEnabled) {
+                playSelectionSound();
+            }
+        };
+        
+        // 全屏按钮
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+        
+        // 重写showResult函数以调整简介显示位置
+        const originalShowResult = showResult;
+        showResult = function(cube) {
+            originalShowResult(cube);
+            
+            // 简介区域已移除，不再显示
+            // 简介区域已移除，不再执行相关操作
+        };
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 初始化折叠菜单
+        const menuToggle = document.getElementById('menu-toggle');
+        const collapsibleMenu = document.getElementById('collapsible-menu');
+        
+        menuToggle.addEventListener('click', function() {
+            menuToggle.classList.toggle('active');
+            collapsibleMenu.classList.toggle('expanded');
+        });
+        
+        // 创建6个菜单详情模态框
+        function createMenuModals() {
+            // 免费福利模态框
+            const freeBenefitsModal = document.createElement('div');
+            freeBenefitsModal.id = 'free-benefits-modal';
+            freeBenefitsModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            freeBenefitsModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">免费福利</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">飞书群专属引导</h3>
+                            <p class="mb-3">所有福利需进入《日斗投资【第十届财富论坛投资策略会】》飞书群领取，进群步骤：</p>
+                            <ol class="list-decimal list-inside space-y-2 pl-4">
+                                <li>打开手机应用商城，搜索 "飞书" 下载 APP；</li>
+                                <li>用手机号注册并登录；</li>
+                                <li>两种进群方式：扫码进群 / 点击链接跳转：</li>
+                                <li><button class="join-group-btn bg-[#05ffa1] text-black font-bold py-2 px-4 rounded-md hover:bg-opacity-80 transition-all" onclick="window.open('https://applink.larksuite.com/client/chat/chatter/add_by_link?link_token=b0en0f42-377e-42a2-b77f-4a93f5805651', '_blank')">立即加入飞书群</button></li>
+                                <li>权益说明：新用户首次进群可免费体验「萤火 3.0 基础选股功能」，后续高级功能需在群内领取专属卡密解锁。</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">群内配套福利</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">免费量化工具包</h4>
+                                    <p>群内定期更新「基础选股组合（每周 1 次）」「7 日行情可视化报告」</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">投资策略会资源</h4>
+                                    <p>同步《第十届财富论坛》直播回放、嘉宾分享的 "量化选股实战案例"</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">新人专属学习包</h4>
+                                    <p>群内领取「量化入门图文课」「零代码策略模板（如北向资金加仓筛选）」</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(freeBenefitsModal);
+
+            // 皓月模态框（合并了原萤火和皓月功能）
+            const moonlightModal = document.createElement('div');
+            moonlightModal.id = 'moonlight-modal';
+            fireflyModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            fireflyModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">皓月</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">产品定位</h3>
+                            <p class="mb-3">由专业团队提供核心技术支持的轻量化量化选股工具，融合在 "多因子模型、数据处理、策略回测" 领域的成熟经验，为个人投资者打造 "机构级体验、平民化门槛" 的选股功能。</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">核心功能</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">专业多因子选股</h4>
+                                    <p>沿用经典的 "估值 + 成长 + 资金 + 情绪"4 大核心维度，升级为 8 大因子体系（含特色的 "高频量价因子"），个股评分与排序逻辑具备专业可靠性。</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">实时行情联动</h4>
+                                    <p>对接专业的机构级行情数据源，选股结果同步显示「分时图、主力资金流向、盘口异动」，数据延迟≤3 秒。</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">极简策略回测</h4>
+                                    <p>基于专业历史回测框架，支持可视化调整参数（如因子权重、持有周期），一键生成「历史收益率、最大回撤、胜率」报告，回测基准默认对标 "沪深 300 指数"。</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">3.0 升级亮点</h3>
+                            <p>引入专业的 "AI 情绪因子"（融合舆情分析、资金热度模型），选股精准度较 2.0 提升 23%；界面响应速度优化采用专业轻量化数据处理方案，流畅度提升 40%。</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+
+            // 皓月高级功能说明（原皓月模块内容）
+            moonlightModal.id = 'moonlight-modal';
+            moonlightModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            moonlightModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">皓月</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">服务定位</h3>
+                            <p class="mb-3">「萤火 3.0」的高端隐藏模块，是日斗投资、幻方量化等联合机构共同打造的 "进阶工具包"，不对外公开功能详情，仅面向飞书群用户开放体验资格。</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">群内体验权益</h3>
+                            <div class="space-y-4">
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">每周 1 次「皓月专属策略推送」</h4>
+                                    <p>由专业团队提供的 "中高级选股策略"（如行业轮动、事件驱动策略），仅群内用户可查看策略逻辑与标的。</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">每月 2 次「机构级数据体验」</h4>
+                                    <p>开放专业团队的 "全量研报、机构持仓明细、行业高频数据"（数据维度是基础功能的 3 倍），仅支持在群内查看，不可下载。</p>
+                                </div>
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-2">专属顾问对接</h4>
+                                    <p>体验期间可预约专业团队的量化顾问，1 对 1 解答 "策略优化、因子调整" 疑问。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(moonlightModal);
+
+            // 量化指标模态框
+            const quantIndicatorsModal = document.createElement('div');
+            quantIndicatorsModal.id = 'quant-indicators-modal';
+            quantIndicatorsModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            quantIndicatorsModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">量化指标</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">指标体系</h3>
+                            <p class="mb-3">「核心因子分类」：基础因子（PE、PB、营收增速等）沿用行业标准，特色因子（如 "高频量价因子""AI 情绪因子"）源自专业技术体系，"价值因子" 参考成熟的价值投资逻辑。</p>
+                            <p class="mb-3">「因子计算逻辑」：以 "多因子模型" 为例，公开各因子权重（如 "高频量价因子占比 25%""成长因子占比 30%"），数据标准化方式采用专业标准。</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">模型透明度</h3>
+                            <p>公开「专业团队共同认证的回测报告」，展示近 3 年 "选股组合 vs 沪深 300 指数" 的超额收益曲线，回测数据由专业团队验证，确保真实性。</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">工具辅助</h3>
+                            <p>提供「指标自定义计算器」，输入个股代码可查看「个股在各因子的得分、行业排名」，排名数据源自联合机构共享的 "全市场因子数据库"。</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(quantIndicatorsModal);
+
+            // 联合机构模态框
+            const partnerInstitutionsModal = document.createElement('div');
+            partnerInstitutionsModal.id = 'partner-institutions-modal';
+            partnerInstitutionsModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            partnerInstitutionsModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">联合机构</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">合作机构名单及价值</h3>
+                            <div class="space-y-4">
+
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-1">日斗投资</h4>
+                                    <p>资源整合方，牵头《第十届财富论坛投资策略会》，负责飞书群运营与福利落地，提供 "策略会直播、嘉宾资源"。</p>
+                                </div>
+
+                                <div class="bg-white/5 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-[#05ffa1] mb-1">聚财众发</h4>
+                                    <p>数据合作方，提供 "机构持仓明细、行业高频数据"，支撑 "皓月" 模块的进阶数据需求。</p>
+                                </div>
+
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">合作形式</h3>
+                            <ul class="list-disc list-inside space-y-2 pl-4">
+                                <li>「技术合作」：与专业技术团队联合开发 "多因子模型""AI 情绪因子"</li>
+                                <li>「资源合作」：与日斗投资联合运营飞书群，同步《财富论坛》资源；共享机构级数据</li>
+                                <li>「策略共创」：与专业团队联合研发 "皓月" 模块的中高级策略</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">机构背书</h3>
+                            <div class="space-y-4">
+
+                                <div class="bg-white/5 p-4 rounded-lg italic">
+                                    <p>日斗投资 CEO："《第十届财富论坛》的核心策略资源已同步至飞书群，结合'萤火''皓月'工具，能为用户提供'策略 + 工具'的一站式服务。"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(partnerInstitutionsModal);
+
+            // 声明模态框
+            const statementModal = document.createElement('div');
+            statementModal.id = 'statement-modal';
+            statementModal.className = 'modal fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden';
+            statementModal.innerHTML = `
+                <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div class="modal-header flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">声明</h2>
+                        <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
+                    </div>
+                    <div class="modal-body text-white">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">风险提示</h3>
+                            <p class="mb-3">量化选股基于历史数据与专业模型算法，不构成投资建议；股市有风险，投资需谨慎；"皓月"模块的过往表现不代表未来收益，用户应结合自身风险承受能力决策；飞书群内分享的策略与数据仅作参考，不可作为实盘操作唯一依据。</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">版权说明</h3>
+                            <p class="mb-3">"量化选股器"软件、数据（含专业团队提供的因子模型、行情数据）、图文内容，知识产权归我司及合作团队共同所有，未经授权禁止转载、商用；飞书群内资源（如直播回放、策略报告）仅限群内用户个人使用，禁止转发。</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">免责条款</h3>
+                            <p>因不可抗力（如服务器故障、行情源异常）或数据更新延迟导致的选股偏差，我司及合作团队不承担赔偿责任；用户需理解量化工具的局限性，不可过度依赖。</p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">隐私政策</h3>
+                            <p>严格保护用户个人信息，不向第三方泄露；如需使用用户数据优化模型，会提前通过飞书群征求用户同意。</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(statementModal);
+
+            // 模态框已经在后面统一添加了关闭事件监听器，这里不再重复添加
+        }
+
+        // 初始化菜单模态框
+            createMenuModals();
+            
+            // 添加加入群组按钮的样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .join-group-btn {
+                    margin: 10px 0;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 0 15px rgba(5, 255, 161, 0.5);
+                }
+                .join-group-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 0 25px rgba(5, 255, 161, 0.8);
+                }
+            `;
+            document.head.appendChild(style);
+
+        // 菜单点击事件
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 关闭菜单
+                menuToggle.classList.remove('active');
+                collapsibleMenu.classList.remove('expanded');
+                
+                // 隐藏首页标题
+                document.querySelector('.title-container').classList.add('title-hidden');
+                
+                // 根据菜单项显示对应的模态框
+                const menuText = this.textContent.trim();
+                console.log('Menu item clicked:', menuText);
+                
+                // 先隐藏所有模态框
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                });
+                
+                // 显示对应模态框
+                switch (menuText) {
+                    case '免费福利':
+                        const freeBenefitsModal = document.getElementById('free-benefits-modal');
+                        freeBenefitsModal.classList.remove('hidden');
+                        freeBenefitsModal.style.display = 'flex';
+                        break;
+
+                    case '皓月':
+                        const moonlightModal = document.getElementById('moonlight-modal');
+                        moonlightModal.classList.remove('hidden');
+                        moonlightModal.style.display = 'flex';
+                        break;
+                    case '量化指标':
+                        const quantIndicatorsModal = document.getElementById('quant-indicators-modal');
+                        quantIndicatorsModal.classList.remove('hidden');
+                        quantIndicatorsModal.style.display = 'flex';
+                        break;
+                    case '联合机构':
+                        const partnerInstitutionsModal = document.getElementById('partner-institutions-modal');
+                        partnerInstitutionsModal.classList.remove('hidden');
+                        partnerInstitutionsModal.style.display = 'flex';
+                        break;
+                    case '声明':
+                        const statementModal = document.getElementById('statement-modal');
+                        statementModal.classList.remove('hidden');
+                        statementModal.style.display = 'flex';
+                        break;
+                }
+            });
+        });
+        
+        // 点击页面其他地方关闭菜单
+        document.addEventListener('click', function(event) {
+            if (!menuToggle.contains(event.target) && 
+                !collapsibleMenu.contains(event.target) && 
+                collapsibleMenu.classList.contains('expanded')) {
+                menuToggle.classList.remove('active');
+                collapsibleMenu.classList.remove('expanded');
+            }
+        });
+        
+        // 等待DOM加载完成后再添加模态框事件监听器
+        setTimeout(() => {
+            // 为所有模态框关闭按钮添加事件监听器
+            document.querySelectorAll('.modal-close').forEach(closeBtn => {
+                closeBtn.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                    
+                    // 显示首页标题
+                    document.querySelector('.title-container').classList.remove('title-hidden');
+                });
+            });
+            
+            // 点击模态框背景关闭模态框
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        this.classList.add('hidden');
+                        this.style.display = 'none';
+                        
+                        // 显示首页标题
+                        document.querySelector('.title-container').classList.remove('title-hidden');
+                    }
+                });
+            });
+        }, 100);
+        
+        // 测试函数：允许通过控制台直接测试声明模态框
+        window.testStatementModal = function() {
+            console.log('Testing statement modal...');
+            const statementModal = document.getElementById('statement-modal');
+            if (statementModal) {
+                console.log('Statement modal found:', statementModal);
+                
+                // 先隐藏所有模态框
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                });
+                
+                // 隐藏首页标题
+                document.querySelector('.title-container').classList.add('title-hidden');
+                
+                // 显示声明模态框
+                statementModal.classList.remove('hidden');
+                statementModal.style.display = 'flex';
+                console.log('Statement modal should be visible now');
+            } else {
+                console.error('Statement modal not found!');
+            }
+        };
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 粒子系统动画
+            if (particlesSystem) {
+                particlesSystem.rotation.x += 0.001;
+                particlesSystem.rotation.y += 0.001;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
