@@ -4,36 +4,41 @@ on:
   push:
     branches:
       - main
+  # 可以手动触发部署
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy_to_vercel:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          # 只检出最近的一个提交，减少下载的文件大小
           fetch-depth: 1
-          # 只检出src目录和必要的配置文件
           sparse-checkout: |
             src/
             vercel.json
             .gitignore
+            config/vercel.json
       
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-      
-      - name: Set up Vercel Environment Variables
+      - name: Trigger Vercel Deployment via Webhook
         run: |
-          echo "VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}" >> $GITHUB_ENV
-          echo "VERCEL_ORG_ID=${{ secrets.VERCEL_ORG_ID }}" >> $GITHUB_ENV
-          echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID }}" >> $GITHUB_ENV
-          # 禁用遥测数据收集以避免相关问题
-          echo "VERCEL_TELEMETRY_DISABLED=1" >> $GITHUB_ENV
+          # 使用提供的Vercel部署挂钩URL直接触发部署
+          curl -X POST "https://api.vercel.com/v1/integrations/deploy/prj_bPhyw2Ie6aZ7HKV4syrm06266CwK/B44WNZLvmT"
+          echo "触发Vercel部署成功"
       
-      - name: Deploy to Vercel Preview
-        run: vercel --yes
-      
-      - name: Deploy to Vercel Production (on main branch)
-        if: github.ref == 'refs/heads/main'
-        run: vercel --prod --yes
+      - name: Verify deployment files exist
+        run: |
+          echo "检查必要的部署文件是否存在..."
+          ls -la src/
+          ls -la config/
+          # 检查vercel.json配置文件
+          if [ -f "config/vercel.json" ]; then
+            echo "Vercel配置文件存在:"
+            cat config/vercel.json
+          elif [ -f "vercel.json" ]; then
+            echo "Vercel配置文件存在:"
+            cat vercel.json
+          else
+            echo "警告: 未找到vercel.json配置文件"
+          fi
