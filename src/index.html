@@ -1,10 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选股器</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/effects.css">
     <script src="js/tushare_api.js"></script>
     <script src="js/stock_selector.js"></script>
+    <script src="js/visual_effects.js"></script>
 </head>
 <body>
+    <!-- 菜单栏（折叠式） -->
+    <div class="menu-container">
+        <button id="menu-toggle" class="menu-toggle" aria-label="打开菜单" aria-expanded="false">
+            <span class="menu-icon"></span>
+        </button>
+        <nav id="collapsible-menu" class="collapsible-menu">
+            <ul>
+                <li class="menu-item">免费福利</li>
+                <li class="menu-item">皓月</li>
+                <li class="menu-item">量化指标</li>
+                <li class="menu-item">联合机构</li>
+                <li class="menu-item">声明</li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- 首页标题（可选） -->
+    <div class="title-container">
+        <h1 class="main-title">皓月选股器</h1>
+        <p class="main-desc">科技感 · 数据可视化 · 量化选股</p>
+    </div>
+
+    <!-- 视觉特效画布 -->
+    <canvas id="effect-canvas"></canvas>
+    
+    <!-- 开始选股按钮 -->
+    <button id="start-btn">开始选股</button>
+    
+    <!-- 结果展示区域 -->
+    <div id="result">
+        <div class="result-moon"></div>
+        <div class="result-title">选股结果</div>
+        <div class="result-list"></div>
+        <div class="result-footer">数据可视化 · 皓月呼应 · 科技感选股</div>
+    </div>
+
     <script>
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         

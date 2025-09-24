@@ -104,17 +104,17 @@
 1. 首先获取基础股票列表：
 ```bash
 cd c:/Users/28163/Desktop/选股器
-python tushare_basic_data.py
+python scripts/tushare_basic_data.py
 ```
 
 2. 从免费数据源获取补充信息：
 ```bash
-python free_stock_data.py
+python scripts/free_stock_data.py
 ```
 
 3. 整合数据并生成最终的stock_data.json文件：
 ```bash
-python integrate_stock_data.py
+python scripts/integrate_stock_data.py
 ```
 
 #### 方法2：解析通达信.day格式文件（如果有相关数据）

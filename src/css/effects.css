@@ -1,0 +1,177 @@
+#effect-canvas {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    background: #050a18;
+}
+#result {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #00faff;
+    font-size: 2em;
+    text-shadow: 0 0 20px #00faff;
+    display: none;
+    z-index: 2;
+}
+#start-btn {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    padding: 1em 2em;
+    font-size: 1.5em;
+    background: linear-gradient(90deg,#00faff,#0055ff);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    box-shadow: 0 0 20px #00faff;
+    cursor: pointer;
+}
+.result-moon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #fff 60%, #00faff 100%);
+    box-shadow: 0 0 60px #00faff, 0 0 20px #fff inset;
+    animation: moonAppear 1.2s cubic-bezier(.7,.2,.3,1);
+}
+@keyframes moonAppear {
+    0% { transform: scale(0.2); opacity: 0; }
+    80% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.result-title {
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #00faff;
+    margin-bottom: 18px;
+    text-shadow: 0 0 16px #00faff;
+    letter-spacing: 2px;
+}
+.result-list {
+    text-align: center;
+    font-size: 1.3em;
+    color: #fff;
+    margin-bottom: 18px;
+}
+.result-list div {
+    margin: 8px 0;
+    padding: 6px 0;
+    border-bottom: 1px dashed #00faff33;
+    font-family: 'Consolas', '微软雅黑';
+    letter-spacing: 1px;
+}
+.result-footer {
+    text-align: center;
+    font-size: 1em;
+    color: #00faff99;
+    margin-top: 16px;
+    letter-spacing: 1px;
+    font-style: italic;
+}
+.menu-container {
+    position: fixed;
+    top: 32px;
+    left: 32px;
+    z-index: 10;
+}
+.menu-toggle {
+    background: linear-gradient(90deg,#00faff,#0055ff);
+    border: none;
+    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    box-shadow: 0 0 16px #00faff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 0.3s;
+}
+.menu-toggle.active {
+    box-shadow: 0 0 32px #00faff;
+}
+.menu-icon {
+    width: 28px;
+    height: 4px;
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 8px #fff, 0 -8px #fff;
+    display: block;
+    transition: background 0.3s;
+}
+.collapsible-menu {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    background: rgba(10,20,40,0.98);
+    border-radius: 16px;
+    box-shadow: 0 0 32px #00faff88;
+    padding: 18px 24px;
+    min-width: 180px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px) scale(0.95);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.collapsible-menu.expanded {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+.collapsible-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.menu-item {
+    padding: 12px 0;
+    color: #00faff;
+    font-size: 1.15em;
+    font-weight: bold;
+    cursor: pointer;
+    border-bottom: 1px dashed #00faff33;
+    transition: background 0.2s, color 0.2s;
+}
+.menu-item:last-child {
+    border-bottom: none;
+}
+.menu-item:hover {
+    background: linear-gradient(90deg,#00faff22,#0055ff22);
+    color: #fff;
+    text-shadow: 0 0 8px #00faff;
+}
+.title-container {
+    position: absolute;
+    top: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+    transition: opacity 0.5s;
+}
+.title-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.main-title {
+    font-size: 2.8em;
+    color: #00faff;
+    text-shadow: 0 0 32px #00faff, 0 0 8px #fff;
+    font-weight: bold;
+    letter-spacing: 3px;
+}
+.main-desc {
+    font-size: 1.2em;
+    color: #fff;
+    margin-top: 12px;
+    text-shadow: 0 0 12px #00faff;
+}

@@ -25,6 +25,8 @@ def check_project_structure():
         "src/index.html",
         "src/js/stock_selector.js",
         "src/js/tushare_api.js",
+        "src/js/visual_effects.js",
+        "src/css/effects.css",
         
         # 数据路径
         "data/original/a_stock_lday",
@@ -76,8 +78,11 @@ def check_project_structure():
     if os.path.exists(html_file):
         with open(html_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            if 'src="js/tushare_api.js"' not in content or 'src="js/stock_selector.js"' not in content:
-                invalid_structure.append("index.html中的JS文件引用路径不正确")
+            if ('src="js/tushare_api.js"' not in content or 
+                'src="js/stock_selector.js"' not in content or
+                'src="js/visual_effects.js"' not in content or
+                'href="css/effects.css"' not in content):
+                invalid_structure.append("index.html中的JS或CSS文件引用路径不正确")
     
     # 输出检查结果
     if missing_paths or invalid_structure:
