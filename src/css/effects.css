@@ -7,6 +7,20 @@
     pointer-events: none;
     background: #050a18;
 }
+
+/* 引入MapleMono-NF-CN-Regular字体 */
+@font-face {
+    font-family: 'MapleMono-NF-CN';
+    src: url('../../fonts/MapleMono-NF-CN-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 为技术指标和数据显示区域应用等宽字体 */
+.tech-indicator {
+    font-family: 'MapleMono-NF-CN', monospace;
+    letter-spacing: 0.5px;
+}
 #result {
     position: absolute;
     top: 40%;
@@ -55,6 +69,7 @@
     margin-bottom: 18px;
     text-shadow: 0 0 16px #00faff;
     letter-spacing: 2px;
+    font-family: 'MapleMono-NF-CN', 'Consolas', '微软雅黑';
 }
 .result-list {
     text-align: center;
@@ -66,7 +81,7 @@
     margin: 8px 0;
     padding: 6px 0;
     border-bottom: 1px dashed #00faff33;
-    font-family: 'Consolas', '微软雅黑';
+    font-family: 'MapleMono-NF-CN', 'Consolas', '微软雅黑';
     letter-spacing: 1px;
 }
 .result-footer {
@@ -168,6 +183,7 @@
     text-shadow: 0 0 32px #00faff, 0 0 8px #fff;
     font-weight: bold;
     letter-spacing: 3px;
+    font-family: 'MapleMono-NF-CN', '微软雅黑';
 }
 .main-desc {
     font-size: 1.2em;

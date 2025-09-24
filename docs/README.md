@@ -9,7 +9,7 @@
 - **编码修复机制**：解决中文显示乱码问题
 - **数据处理流水线**：支持通达信.day格式数据解析
 - **优化的项目结构**：清晰的模块化设计，包含Serverless函数支持
-- **可视化界面**：现代化UI设计，响应式布局
+- **可视化界面**：现代化UI设计，响应式布局，集成视觉特效
 - **智能选股结果**：每次返回最优的一只个股
 
 ## 项目结构
@@ -19,7 +19,7 @@
 ```
 选股器/
 ├── src/                  # 前端相关文件
-│   ├── index.html        # 主页面
+│   ├── index.html        # 优化整合的主页面文件，包含完整功能
 │   ├── js/               # JavaScript文件
 │   │   ├── stock_selector.js # 选股算法模块
 │   │   └── tushare_api.js    # API集成模块
@@ -174,10 +174,14 @@ python run_stock_selector.py
 
 ### 前端开发
 
-前端基于HTML5、Tailwind CSS和原生JavaScript开发，主要文件位于src/目录：
-- index.html: 包含页面结构和样式
-- stock_selector.js: 实现选股算法和数据处理
-- tushare_api.js: 处理数据加载和缓存
+前端采用HTML/CSS/JavaScript原生开发，无需构建工具。前端文件已优化整合，主要包括：
+
+- `index.html`: 优化整合的主页面文件，集成了选股功能与现代UI设计
+- `css/`: 样式表
+- `js/`: 交互脚本
+- `resources/`: 静态资源
+
+修改前端代码时，直接编辑相应文件即可，无需额外的构建步骤。
 
 前端通过以下方式与Serverless函数交互：
 ```javascript
