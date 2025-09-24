@@ -537,10 +537,19 @@ window.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0,0,W,H);
         const resultDiv = document.getElementById('result');
         const resultList = resultDiv.querySelector('.result-list');
-        resultList.innerHTML = stockData.map(s => `<div>${s.code} ${s.name}</div>`).join('');
-        resultDiv.style.display = "block";
-        // 皓月动画首尾呼应
-        resultDiv.querySelector('.result-moon').style.animation = "moonAppear 1.2s cubic-bezier(.7,.2,.3,1)";
+        fetch('/api/select')
+            .then(res => res.json())
+            .then(stockData => {
+                resultList.innerHTML = stockData.map(s => 
+                    `<div>${s.stock_code} ${s.close_price} 分数:${s.score}</div>`
+                ).join('');
+                resultDiv.style.display = "block";
+                resultDiv.querySelector('.result-moon').style.animation = "moonAppear 1.2s cubic-bezier(.7,.2,.3,1)";
+            })
+            .catch(() => {
+                resultList.innerHTML = "<div>未获取到选股结果，请检查后端服务。</div>";
+                resultDiv.style.display = "block";
+            });
     }
 
     // 绑定按钮事件
