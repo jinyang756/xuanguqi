@@ -20,6 +20,7 @@ jobs:
             vercel.json
             package.json
             .gitignore
+            config/
       
       - name: Trigger Vercel Deployment via Webhook
         run: |
@@ -31,7 +32,13 @@ jobs:
         run: |
           echo "检查必要的部署文件是否存在..."
           ls -la src/
-          ls -la config/
+          # 检查config目录是否存在，不存在也不会导致失败
+          if [ -d "config/" ]; then
+            echo "config目录存在" 
+            ls -la config/
+          else
+            echo "config目录不存在，但继续部署过程"
+          fi
           # 检查vercel.json配置文件
           if [ -f "vercel.json" ]; then
             echo "Vercel配置文件存在:" 
