@@ -18,56 +18,51 @@
 
 ```
 选股器/
-├── src/                  # 前端相关文件
-│   ├── index.html        # 优化整合的主页面文件，包含完整功能
-│   ├── js/               # JavaScript文件
-│   │   ├── stock_selector.js # 选股算法模块
-│   │   └── tushare_api.js    # API集成模块
-│   ├── css/              # CSS样式文件
-│   └── resources/        # 前端资源
-│       └── fonts/        # 字体文件
+├── .github/              # GitHub配置文件
+│   └── workflows/        # GitHub Actions工作流
+├── .vercel/              # Vercel配置文件
+├── .vscode/              # VS Code配置文件
+├── DEPLOYMENT.md         # 部署说明文档
+├── __pycache__/          # Python编译缓存
+│   └── generate_mock_data.cpython-38.pyc
 ├── api/                  # Serverless函数（用于Vercel部署）
+│   ├── __pycache__/
+│   │   └── select.cpython-38.pyc
 │   └── select.py         # 选股API实现
 ├── backend/              # 后端Python脚本
-│   ├── data_processing/  # 数据处理模块
-│   │   ├── parse_day_files.py        # .day文件解析工具
-│   │   ├── cleanup_a_stock_data.py   # A股数据清理工具
-│   │   └── integrate_stock_data.py   # 数据整合脚本
-│   ├── filtering/        # 股票筛选模块
-│   │   ├── select_stock.py   # 股票筛选主脚本
-│   │   └── filter_a_stocks.py # A股数据过滤脚本
 │   ├── api/              # 后端API模块
-│   │   ├── free_stock_data.py # 免费数据源脚本
-│   │   ├── phone_storage.py # 电话号码存储功能
-│   │   ├── save_phone_api.py # 保存电话号码API
-│   │   ├── select.py        # 选股API实现
-│   │   └── select_api.py    # 选股API封装
-├── data/                 # 数据相关文件
-│   ├── original/         # 原始数据
-│   │   ├── a_stock_lday/     # A股.day格式数据文件
-│   │   └── non_a_stock_lday/ # 非A股.day格式数据文件
-│   ├── processed/        # 处理后的数据
-│   │   └── stock_data_a_shares_fixed.json # 过滤后的A股数据
-│   └── daily/            # 特定股票的日线数据
-├── docs/                 # 文档目录
-│   ├── README.md                 # 项目说明文档
-│   ├── 开发者日志指南.md            # 开发和维护记录
-│   └── A股数据清理和目录优化报告.md  # 数据清理报告
-├── logs/                 # 日志文件目录
-├── scripts/              # 工具脚本
-│   ├── check_data_dir.py      # 数据目录检查
-│   ├── check_original_data.py # 原始数据检查
-│   ├── fix_encoding.py        # 编码修复工具
-│   └── verify_cleanup.py      # 清理验证工具
-├── config/               # 配置文件
+│   │   ├── free_stock_data.py  # 免费数据源脚本
+│   │   ├── phone_storage.py    # 电话号码存储功能
+│   │   ├── save_phone_api.py   # 保存电话号码API
+│   │   ├── select.py           # 选股API实现
+│   │   └── select_api.py       # 选股API封装
+│   └── filtering/        # 股票筛选模块
+│       ├── filter_a_stocks.py  # A股数据过滤脚本
+│       └── select_stock.py     # 股票筛选主脚本
+├── clean_workspace.bat   # 工作区清理脚本
+├── config.js             # 配置文件
+├── config/               # 配置文件目录
 │   └── vercel.json       # Vercel部署配置
-├── DEPLOYMENT.md         # 部署说明文档
+├── docs/                 # 文档目录
+│   └── README.md         # 项目说明文档
+├── fonts/                # 字体文件
+│   └── MapleMono-NF-CN-Regular.ttf
+├── mock_test_single_stock.py  # 模拟测试脚本
 ├── requirements.txt      # Python依赖声明
-├── 更新股票数据.bat       # 数据更新批处理脚本
-├── run_stock_selector.py # 主启动脚本
+├── resources/            # 资源文件（目前为空）
+├── src/                  # 前端相关文件
+│   ├── README.md         # 前端模块说明文档
+│   ├── css/              # CSS样式文件
+│   │   └── effects.css   # 视觉特效样式
+│   ├── index.html        # 优化整合的主页面文件，包含完整功能
+│   ├── js/               # JavaScript文件
+│   │   ├── stock_selector.js  # 选股算法模块
+│   │   ├── tushare_api.js     # API集成模块
+│   │   └── visual_effects.js  # 视觉特效实现
+│   └── resources/        # 前端资源
+│       └── fonts/
 ├── test_select.py        # 测试脚本
-├── mock_test_single_stock.py # 模拟测试脚本
-└── .gitignore            # Git忽略文件
+└── test_single_stock.py  # 单只股票测试脚本
 ```
 
 ## 功能介绍
@@ -75,13 +70,12 @@
 1. **数据处理**
    - 解析通达信.day格式文件
    - 清洗和标准化股票数据
-   - 缓存机制优化数据加载速度
    - A股数据过滤和分类
 
 2. **选股功能**
    - 多因子选股算法（短期上涨潜力模型）
-   - 技术指标计算（MA5/MA20/MA60均线、成交量均线、布林带等）
-   - 突破策略实现（成交量放大、收盘价突破上轨、均线多头排列等）
+   - 技术指标计算
+   - 突破策略实现
    - 智能优选：每次仅返回最优的一只个股
    - 数据可视化展示
 
@@ -115,30 +109,6 @@ pip install akshare pandas
 
 ```bash
 双击运行 "更新股票数据.bat"
-```
-
-该脚本会解析data/original/lday/目录下的.day文件，并将结果保存到data/processed/stock_data.json。
-
-或者，您也可以手动运行以下脚本更新数据：
-
-#### 方法1：使用Python脚本更新数据
-
-1. 首先获取基础股票列表：
-```bash
-cd c:/Users/28163/Desktop/选股器
-python backend/api/free_stock_data.py
-```
-
-2. 整合数据并生成最终的数据文件：
-```bash
-python backend/data_processing/integrate_stock_data.py
-```
-
-#### 方法2：解析通达信.day格式文件（如果有相关数据）
-
-```bash
-cd c:/Users/28163/Desktop/选股器/backend
-python data_processing/parse_day_files.py
 ```
 
 ### 3. 启动选股器
@@ -188,28 +158,24 @@ python run_stock_selector.py
 fetch('/api/select')
   .then(response => response.json())
   .then(data => {
-    // 注意：返回的结果最多包含一只优选个股
+    // 处理选股结果
     if (data && data.length > 0) {
       const selectedStock = data[0];
       // 显示选股结果
     }
+  })
+  .catch(error => {
+    console.error('选股API调用失败:', error);
   });
 ```
 
 ### 后端开发
 
 后端使用Python实现数据处理和选股逻辑，主要文件包括：
-- `api/select.py`: Serverless函数实现，包含SimpleStockSelector类和handler函数
-- backend/filtering/select_stock.py: 实现选股算法和结果展示
-- backend/data_processing/parse_day_files.py: 解析通达信.day文件
+- `api/select.py`: Serverless函数实现
+- `backend/filtering/select_stock.py`: 实现选股算法和结果展示
 
-关键类和方法：
-- `SimpleStockSelector`类：实现选股核心功能
-  - `calculate_technical_indicators()`: 计算技术指标
-  - `breakout_strategy()`: 实现突破策略判断
-  - `run_screening()`: 执行选股筛选并返回最优一只个股
-
-### Serverless函数部署
+## Serverless函数部署
 
 项目支持在Vercel平台上进行Serverless部署：
 1. Vercel会自动识别项目根目录下的`api/`目录
@@ -222,28 +188,22 @@ fetch('/api/select')
 
 项目支持使用更纱黑体（Sarasa Gothic）提升显示效果：
 
-1. 从以下链接下载更纱黑体v1.0.32版本的TTF格式字体：
-   - 清华大学镜像站：https://mirrors.tuna.tsinghua.edu.cn/github-release/be5invis/Sarasa-Gothic/LatestRelease/
-   - GitHub Releases：https://github.com/be5invis/Sarasa-Gothic/releases/tag/v1.0.32
-
-2. 推荐下载以下字重：
-   - Sarasa Mono SC Regular（常规字重）
-   - Sarasa Mono SC Bold（粗体字重）
-
-3. 将下载的字体文件放置在resources/fonts/目录下
-
-4. 刷新浏览器缓存以加载新字体
+1. 从以下链接下载更纱黑体的TTF格式字体
+2. 将下载的字体文件放置在resources/fonts/目录下
+3. 刷新浏览器缓存以加载新字体
 
 ## 测试
 
 项目包含多个测试脚本以验证功能正确性：
 - `test_select.py`: 用于测试选股功能的基本逻辑
 - `mock_test_single_stock.py`: 模拟测试，验证只返回第一只优选个股的功能
+- `test_single_stock.py`: 单只股票测试脚本
 
 可以通过以下命令运行测试：
 ```bash
 python test_select.py
 python mock_test_single_stock.py
+python test_single_stock.py
 ```
 
 ## 注意事项
@@ -262,10 +222,7 @@ python mock_test_single_stock.py
 答：该项目前端使用纯HTML/CSS/JavaScript开发，没有依赖Node.js包，因此不需要package.json文件和npm命令。
 
 **问：如何判断数据是否更新成功？**
-答：检查data/processed/目录下是否生成了相应的数据文件，并且文件大小合理。
+答：检查相关数据目录下是否生成了相应的数据文件，并且文件大小合理。
 
 **问：启动服务器后无法访问页面怎么办？**
 答：请检查服务器是否正常运行，以及浏览器地址是否正确（http://localhost:8080/src/）。
-
-**问：为什么选股结果只返回一只股票？**
-答：为了提高用户体验和决策效率，系统经过优化后，每次仅返回最优的一只个股。

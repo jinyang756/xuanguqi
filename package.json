@@ -1,0 +1,11 @@
+{
+  "name": "stock-selector",
+  "version": "1.0.0",
+  "description": "A股量化选股工具",
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build required for static site'"
+  },
+  "author": "",
+  "license": "ISC"
+}

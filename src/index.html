@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>量化选股器</title>
+    <title>皓月 | 灵犀量化：AI 驱动的金融投资智选引擎</title>
     <!-- 字体引入 -->
     <link href="https://fonts.cdnfonts.com/css/maplemono-nf-cn" rel="stylesheet">
     
@@ -396,16 +396,16 @@
         </div>
         <div class="collapsible-menu" id="collapsible-menu">
             <div class="menu-item">免费福利</div>
-            <div class="menu-item">皓月</div>
+            <div class="menu-item">皓月AI</div>
             <div class="menu-item">量化指标</div>
             <div class="menu-item">联合机构</div>
-            <div class="menu-item">声明</div>
+            <div class="menu-item">关于我们</div>
         </div>
     </div>
     
     <!-- 标题容器 -->
     <div class="title-container">
-        <h1>量化选股器</h1>
+        <h1>皓月 | 灵犀量化：AI 驱动的金融投资智选引擎</h1>
         <button class="start-btn" id="start-btn">开始选股</button>
     </div>
     
@@ -420,6 +420,9 @@
     </div>
     
     <script>
+        // 全局粒子数组
+        let particles = [];
+        
         // 初始化视觉特效
         function initVisualEffects() {
             const canvas = document.getElementById('visual-canvas');
@@ -434,9 +437,9 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            // 创建粒子
-            const particles = [];
-            const particleCount = 50;
+            // 清空粒子数组并重新创建
+            particles = [];
+            const particleCount = 100; // 增加粒子数量以增强效果
             
             for (let i = 0; i < particleCount; i++) {
                 particles.push({
@@ -445,13 +448,15 @@
                     size: Math.random() * 3 + 1,
                     speedX: (Math.random() - 0.5) * 0.5,
                     speedY: (Math.random() - 0.5) * 0.5,
-                    color: `rgba(${Math.floor(Math.random() * 5 + 5)}, ${Math.floor(Math.random() * 255 + 0)}, ${Math.floor(Math.random() * 255 + 161)}, ${Math.random() * 0.8 + 0.2})`
+                    color: `rgba(${Math.floor(Math.random() * 5 + 5)}, ${Math.floor(Math.random() * 255 + 0)}, ${Math.floor(Math.random() * 255 + 161)}, ${Math.random() * 0.8 + 0.2})`,
+                    phase: Math.random() * Math.PI * 2 // 添加相位属性用于波浪效果
                 });
             }
             
             // 创建网格线
             const gridSize = 40;
-            const gridLines = [];
+            let gridOffsetX = 0;
+            let gridOffsetY = 0;
             
             // 绘制动画
             function draw() {
@@ -464,12 +469,19 @@
                 ctx.fillStyle = gradient;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
+                // 网格线动画 - 缓慢平移网格
+                gridOffsetX += 0.05;
+                gridOffsetY += 0.03;
+                
                 // 绘制网格线
-                ctx.strokeStyle = 'rgba(5, 255, 161, 0.1)';
+                ctx.strokeStyle = 'rgba(5, 255, 161, 0.15)'; // 略微增加透明度以增强可见性
                 ctx.lineWidth = 1;
                 
                 // 垂直线
-                for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let x = gridOffsetX % gridSize; x < canvas.width; x += gridSize) {
+                    // 添加垂直线淡入淡出效果
+                    const alpha = 0.05 + 0.1 * Math.sin(x * 0.01 + gridOffsetX * 0.1);
+                    ctx.strokeStyle = `rgba(5, 255, 161, ${alpha})`;
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
                     ctx.lineTo(x, canvas.height);
@@ -477,7 +489,10 @@
                 }
                 
                 // 水平线
-                for (let y = 0; y < canvas.height; y += gridSize) {
+                for (let y = gridOffsetY % gridSize; y < canvas.height; y += gridSize) {
+                    // 添加水平线淡入淡出效果
+                    const alpha = 0.05 + 0.1 * Math.sin(y * 0.01 + gridOffsetY * 0.1);
+                    ctx.strokeStyle = `rgba(5, 255, 161, ${alpha})`;
                     ctx.beginPath();
                     ctx.moveTo(0, y);
                     ctx.lineTo(canvas.width, y);
@@ -486,18 +501,30 @@
                 
                 // 绘制粒子
                 particles.forEach(particle => {
-                    ctx.beginPath();
-                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                    ctx.fillStyle = particle.color;
-                    ctx.fill();
-                    
-                    // 更新粒子位置
-                    particle.x += particle.speedX;
-                    particle.y += particle.speedY;
+                    // 应用波浪运动效果
+                    particle.phase += 0.02;
+                    particle.x += particle.speedX + 0.3 * Math.sin(particle.phase);
+                    particle.y += particle.speedY + 0.3 * Math.cos(particle.phase);
                     
                     // 边界检查
                     if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1;
                     if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1;
+                    
+                    // 添加粒子呼吸效果
+                    const pulse = 1 + 0.3 * Math.sin(particle.phase);
+                    const currentSize = particle.size * pulse;
+                    
+                    // 绘制粒子主体
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, currentSize, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.fill();
+                    
+                    // 添加粒子光晕效果
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, currentSize * 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(5, 255, 161, ${0.1 * (0.5 + 0.5 * Math.sin(particle.phase))})`;
+                    ctx.fill();
                 });
                 
                 // 绘制粒子连接线
@@ -508,7 +535,7 @@
             
             // 连接接近的粒子
             function connectParticles() {
-                const maxDistance = 100;
+                const maxDistance = 120; // 增加连接距离
                 
                 for (let i = 0; i < particles.length; i++) {
                     for (let j = i + 1; j < particles.length; j++) {
@@ -517,9 +544,13 @@
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
                         if (distance < maxDistance) {
+                            // 添加连接线脉动效果
+                            const pulseFactor = 0.5 + 0.5 * Math.sin(Date.now() * 0.001);
+                            const alpha = (0.8 - distance / maxDistance) * pulseFactor;
+                            
                             ctx.beginPath();
-                            ctx.strokeStyle = `rgba(5, 255, 161, ${0.8 - distance / maxDistance})`;
-                            ctx.lineWidth = 0.5;
+                            ctx.strokeStyle = `rgba(5, 255, 161, ${alpha})`;
+                            ctx.lineWidth = 0.8; // 略微增加线宽
                             ctx.moveTo(particles[i].x, particles[i].y);
                             ctx.lineTo(particles[j].x, particles[j].y);
                             ctx.stroke();
@@ -607,7 +638,10 @@
                 resultsContainer.style.display = 'block';
                 loading.style.display = 'block';
                 
-                // 模拟选股过程
+                // 创建选股过程特效
+                createSelectionAnimation();
+                
+                // 模拟选股过程 - 10秒后显示结果
                 setTimeout(() => {
                     // 隐藏加载状态
                     loading.style.display = 'none';
@@ -619,68 +653,449 @@
                     setTimeout(() => {
                         playSound();
                     }, 300);
-                }, 2000);
+                }, 10000);
             }, 500);
+        }
+        
+        // 创建选股过程的粒子动画特效
+        function createSelectionAnimation() {
+            const canvas = document.getElementById('visual-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 保存原始粒子以便后续恢复
+            const originalParticles = [...particles];
+            
+            // 创建额外的选股粒子
+            const selectionParticles = [];
+            const selectionParticleCount = 300; // 增加粒子数量以增强视觉效果
+            
+            // 计算中心点
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // 创建选股专用粒子
+            for (let i = 0; i < selectionParticleCount; i++) {
+                // 生成随机位置，但确保粒子分布在画布上
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                
+                selectionParticles.push({
+                    x: x,
+                    y: y,
+                    size: Math.random() * 3 + 1,
+                    speed: Math.random() * 3 + 1,
+                    angle: Math.random() * Math.PI * 2,
+                    // 使用更明亮的颜色以突出选股粒子
+                    color: `rgba(${Math.floor(Math.random() * 5 + 250)}, ${Math.floor(Math.random() * 255 + 200)}, ${Math.floor(Math.random() * 255 + 200)}, ${Math.random() * 0.8 + 0.2})`,
+                    alpha: Math.random() * 0.8 + 0.2,
+                    phase: Math.random() * Math.PI * 2,
+                    targetX: 0,
+                    targetY: 0,
+                    // 标记关键粒子，用于形成更明显的形状
+                    isKeyParticle: i % 8 === 0,
+                    // 粒子深度，用于3D效果
+                    depth: Math.random() * 100 + 50
+                });
+            }
+            
+            // 添加高级进度指示器
+            const progressContainer = document.createElement('div');
+            progressContainer.id = 'selection-progress';
+            progressContainer.style.position = 'fixed';
+            progressContainer.style.top = '50%';
+            progressContainer.style.left = '50%';
+            progressContainer.style.transform = 'translate(-50%, -50%)';
+            progressContainer.style.zIndex = '1000';
+            progressContainer.style.textAlign = 'center';
+            // 增强进度指示器的视觉效果
+            progressContainer.innerHTML = `
+                <div style="color: #05ffa1; font-size: 28px; margin-bottom: 25px; text-shadow: 0 0 15px rgba(5, 255, 161, 0.8); font-weight: 300; letter-spacing: 2px;">AI智能选股分析中</div>
+                <div style="width: 400px; height: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; overflow: hidden; box-shadow: 0 0 10px rgba(5, 255, 161, 0.2) inset; margin: 0 auto 15px;">
+                    <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #05ffa1, #00f0ff, #05ffa1); transition: width 0.1s linear; box-shadow: 0 0 20px rgba(5, 255, 161, 0.6);"></div>
+                </div>
+                <div id="progress-text" style="color: rgba(5, 255, 161, 0.8); font-size: 16px; font-family: 'Rajdhani', sans-serif;">0%</div>
+            `;
+            document.body.appendChild(progressContainer);
+            
+            // 为粒子分配目标位置（形成股票代码形状的点阵）
+            function assignParticleTargets() {
+                // 股票代码的点阵表示（这里使用"贵州茅台"的首字母"贵"的点阵近似）
+                const targetPoints = [
+                    // 贵字的点阵表示简化版
+                    {x: centerX - 40, y: centerY - 60}, {x: centerX - 20, y: centerY - 60}, {x: centerX, y: centerY - 60}, {x: centerX + 20, y: centerY - 60}, {x: centerX + 40, y: centerY - 60},
+                    {x: centerX - 40, y: centerY - 40}, {x: centerX + 40, y: centerY - 40},
+                    {x: centerX - 40, y: centerY - 20}, {x: centerX - 20, y: centerY - 20}, {x: centerX, y: centerY - 20}, {x: centerX + 20, y: centerY - 20}, {x: centerX + 40, y: centerY - 20},
+                    {x: centerX - 40, y: centerY}, {x: centerX - 20, y: centerY}, {x: centerX, y: centerY}, {x: centerX + 20, y: centerY}, {x: centerX + 40, y: centerY},
+                    {x: centerX - 40, y: centerY + 20}, {x: centerX, y: centerY + 20}, {x: centerX + 40, y: centerY + 20},
+                    {x: centerX - 40, y: centerY + 40}, {x: centerX - 20, y: centerY + 40}, {x: centerX, y: centerY + 40}, {x: centerX + 20, y: centerY + 40}, {x: centerX + 40, y: centerY + 40},
+                    {x: centerX - 40, y: centerY + 60}, {x: centerX - 20, y: centerY + 60}, {x: centerX, y: centerY + 60}, {x: centerX + 20, y: centerY + 60}, {x: centerX + 40, y: centerY + 60}
+                ];
+                
+                // 为关键粒子分配目标位置
+                let targetIndex = 0;
+                selectionParticles.forEach(particle => {
+                    if (particle.isKeyParticle && targetIndex < targetPoints.length) {
+                        particle.targetX = targetPoints[targetIndex].x;
+                        particle.targetY = targetPoints[targetIndex].y;
+                        targetIndex++;
+                    } else {
+                        // 非关键粒子围绕画布边缘分布
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = Math.random() * 100 + canvas.width * 0.3;
+                        particle.targetX = centerX + Math.cos(angle) * radius;
+                        particle.targetY = centerY + Math.sin(angle) * radius;
+                    }
+                });
+            }
+            
+            // 调用函数分配目标位置
+            assignParticleTargets();
+            
+            // 连接粒子函数，创建粒子间的连线
+            function connectSelectionParticles() {
+                const maxDistance = 120; // 粒子连接的最大距离
+                
+                for (let i = 0; i < selectionParticles.length; i++) {
+                    for (let j = i + 1; j < selectionParticles.length; j++) {
+                        const dx = selectionParticles[i].x - selectionParticles[j].x;
+                        const dy = selectionParticles[i].y - selectionParticles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // 只连接关键粒子或距离较近的粒子
+                        if (distance < maxDistance && (selectionParticles[i].isKeyParticle || selectionParticles[j].isKeyParticle)) {
+                            // 根据距离调整透明度
+                            const alpha = 0.5 * (1 - distance / maxDistance);
+                            
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(selectionParticles[i].x, selectionParticles[i].y);
+                            ctx.lineTo(selectionParticles[j].x, selectionParticles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            
+            // 动画开始时间
+            let startTime = Date.now();
+            
+            // 主动画函数
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / 10000, 1); // 10秒动画
+                
+                // 更新进度条和文本
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                if (progressBar && progressText) {
+                    progressBar.style.width = `${progress * 100}%`;
+                    progressText.textContent = `${Math.round(progress * 100)}%`;
+                }
+                
+                // 创建中心光晕效果，随进度增强
+                if (progress > 0.6) {
+                    const glowSize = (progress - 0.6) * 2.5 * Math.max(canvas.width, canvas.height);
+                    const glowAlpha = 0.3 * (1 - (progress - 0.6) / 0.4);
+                    
+                    // 创建径向渐变作为光晕
+                    const gradient = ctx.createRadialGradient(
+                        centerX, centerY, 0,
+                        centerX, centerY, glowSize
+                    );
+                    gradient.addColorStop(0, `rgba(5, 255, 161, ${glowAlpha})`);
+                    gradient.addColorStop(0.7, `rgba(5, 255, 161, 0)`);
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, glowSize, 0, Math.PI * 2);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                }
+                
+                // 更新和绘制选股粒子
+                selectionParticles.forEach(particle => {
+                    // 更新粒子相位（用于动画效果）
+                    particle.phase += 0.02;
+                    
+                    // 根据进度控制粒子行为，分为三个阶段
+                    if (progress < 0.4) {
+                        // 第一阶段：随机运动，逐渐向目标位置靠近
+                        const dx = particle.targetX - particle.x;
+                        const dy = particle.targetY - particle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 5) {
+                            // 向目标位置移动
+                            particle.x += dx * 0.01;
+                            particle.y += dy * 0.01;
+                        }
+                        
+                        // 添加随机波动效果
+                        particle.x += Math.sin(particle.phase) * 3;
+                        particle.y += Math.cos(particle.phase) * 3;
+                    } else if (progress < 0.7) {
+                        // 第二阶段：向中心快速聚集
+                        const dx = centerX - particle.x;
+                        const dy = centerY - particle.y;
+                        // 随时间增加聚集速度
+                        const factor = 0.05 * (1 - (progress - 0.4) / 0.3);
+                        
+                        particle.x += dx * factor;
+                        particle.y += dy * factor;
+                        
+                        // 添加快速振动效果
+                        const vibrationFactor = 5 * (1 - (progress - 0.4) / 0.3);
+                        particle.x += Math.sin(particle.phase * 3) * vibrationFactor;
+                        particle.y += Math.cos(particle.phase * 3) * vibrationFactor;
+                    } else {
+                        // 第三阶段：形成股票代码形状并产生脉冲效果
+                        const pulseFactor = 1 + 0.2 * Math.sin(elapsed * 0.005);
+                        const finalRadius = 120 - (progress - 0.7) * 80;
+                        
+                        if (particle.isKeyParticle) {
+                            // 关键粒子形成稳定形状并产生脉动
+                            const distanceFromCenter = Math.sqrt(
+                                Math.pow(particle.x - centerX, 2) + Math.pow(particle.y - centerY, 2)
+                            );
+                            
+                            if (distanceFromCenter < finalRadius * 1.5) {
+                                // 轻微脉动效果
+                                const pulseOffset = (1 - distanceFromCenter / (finalRadius * 1.5)) * 5 * Math.sin(elapsed * 0.003);
+                                const angleToCenter = Math.atan2(particle.y - centerY, particle.x - centerX);
+                                
+                                particle.x = centerX + Math.cos(angleToCenter) * (distanceFromCenter + pulseOffset);
+                                particle.y = centerY + Math.sin(angleToCenter) * (distanceFromCenter + pulseOffset);
+                            }
+                        } else {
+                            // 非关键粒子围绕中心旋转并向内收缩
+                            const orbitRadius = finalRadius * (1 + 0.2 * Math.sin(particle.phase));
+                            const orbitSpeed = 0.002 * (1 - (progress - 0.7) / 0.3);
+                            
+                            particle.angle += orbitSpeed;
+                            particle.x = centerX + Math.cos(particle.angle) * orbitRadius;
+                            particle.y = centerY + Math.sin(particle.angle) * orbitRadius;
+                        }
+                        
+                        // 粒子呼吸效果
+                        particle.size = 1 + 0.5 * Math.sin(particle.phase);
+                        particle.alpha = 0.5 + 0.3 * Math.sin(particle.phase);
+                    }
+                    
+                    // 添加粒子光晕效果
+                    const glowSize = particle.size * 2;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, glowSize, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${particle.alpha * 0.1})`;
+                    ctx.fill();
+                    
+                    // 绘制粒子主体
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${Math.floor(Math.random() * 5 + 250)}, ${Math.floor(Math.random() * 255 + 200)}, ${Math.floor(Math.random() * 255 + 200)}, ${particle.alpha})`;
+                    ctx.fill();
+                    
+                    // 为关键粒子添加核心亮点
+                    if (particle.isKeyParticle) {
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${particle.alpha})`;
+                        ctx.fill();
+                    }
+                });
+                
+                // 连接接近的粒子，创建网络效果
+                connectSelectionParticles();
+                
+                // 使用全局的particles数组，创建与背景粒子的互动效果
+                if (originalParticles && originalParticles.length > 0) {
+                    for (let i = 0; i < selectionParticles.length; i++) {
+                        for (let j = 0; j < originalParticles.length; j++) {
+                            const dx = selectionParticles[i].x - originalParticles[j].x;
+                            const dy = selectionParticles[i].y - originalParticles[j].y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            // 关键粒子与背景粒子建立连接
+                            if (distance < 150 && selectionParticles[i].isKeyParticle) {
+                                ctx.beginPath();
+                                const alpha = 0.2 * (1 - distance / 150);
+                                ctx.strokeStyle = `rgba(5, 255, 161, ${alpha})`;
+                                ctx.lineWidth = 0.3;
+                                ctx.moveTo(selectionParticles[i].x, selectionParticles[i].y);
+                                ctx.lineTo(originalParticles[j].x, originalParticles[j].y);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                }
+                
+                // 继续动画直到完成
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 动画结束，清理进度指示器
+                    setTimeout(() => {
+                        const progressElement = document.getElementById('selection-progress');
+                        if (progressElement) {
+                            progressElement.remove();
+                        }
+                    }, 500);
+                }
+            }
+            
+            // 启动动画
+            animate();
         }
         
         // 生成选股结果
         function generateResults() {
             const resultsContent = document.getElementById('results-content');
             
-            // 模拟股票数据
-            const stocks = [
-                { code: '600000', name: '浦发银行', score: 85, industry: '银行', price: '8.25', change: '+1.2%' },
-                { code: '000001', name: '平安银行', score: 78, industry: '银行', price: '12.68', change: '+0.8%' },
-                { code: '600519', name: '贵州茅台', score: 92, industry: '酿酒', price: '1680.00', change: '+2.1%' },
-                { code: '000858', name: '五粮液', score: 88, industry: '酿酒', price: '186.50', change: '+1.5%' },
-                { code: '300750', name: '宁德时代', score: 90, industry: '新能源', price: '485.00', change: '+3.2%' }
-            ];
+            // 模拟股票数据 - 只保留一只最佳股票
+            const selectedStock = {
+                code: '600519', 
+                name: '贵州茅台', 
+                industry: '酿酒行业', 
+                score: 98, 
+                price: '1888.00', 
+                change: '+2.56%', 
+                volume: '12.5万手', 
+                description: '白酒龙头企业，业绩稳定增长，市场占有率高。具备极强的品牌壁垒和定价能力，现金流充裕，分红稳定。近期受市场情绪影响有所调整，当前估值处于合理区间，中长期投资价值显著。',
+                reasons: [
+                    '品牌价值行业领先，护城河深厚',
+                    '高端白酒市场需求稳定增长',
+                    '财务状况健康，利润率持续提升',
+                    '国际化战略布局逐步推进',
+                    '机构持仓比例高，市场认可度强'
+                ]
+            };
             
-            // 创建结果表格
-            let tableHTML = `
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>行业</th>
-                            <th>评分</th>
-                            <th>现价</th>
-                            <th>涨跌幅</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            // 创建选中股票的突出显示卡片
+            const resultCard = document.createElement('div');
+            resultCard.className = 'selected-stock-card';
+            resultCard.style = `
+                background: rgba(0, 24, 59, 0.85);
+                border: 2px solid #05ffa1;
+                border-radius: 15px;
+                padding: 40px;
+                margin: 20px auto;
+                max-width: 800px;
+                box-shadow: 0 0 30px rgba(5, 255, 161, 0.3);
+                text-align: center;
+                animation: glow 2s ease-in-out infinite alternate;
             `;
             
-            // 添加表格行
-            stocks.forEach(stock => {
-                // 根据评分设置颜色类
-                let scoreClass = 'score-medium';
-                if (stock.score >= 90) {
-                    scoreClass = 'score-high';
-                } else if (stock.score <= 70) {
-                    scoreClass = 'score-low';
+            // 添加股票基本信息
+            const stockHeader = document.createElement('div');
+            stockHeader.style = 'margin-bottom: 30px;';
+            stockHeader.innerHTML = `
+                <h2 style="color: #05ffa1; font-size: 48px; margin: 0;">${selectedStock.name}</h2>
+                <p style="color: #ffffff; font-size: 24px; margin-top: 10px;">${selectedStock.code}</p>
+            `;
+            resultCard.appendChild(stockHeader);
+            
+            // 添加核心数据
+            const stockData = document.createElement('div');
+            stockData.style = 'display: flex; justify-content: space-around; margin-bottom: 30px; flex-wrap: wrap;';
+            
+            const scoreItem = document.createElement('div');
+            scoreItem.style = 'flex: 1; min-width: 100px; margin: 10px;';
+            scoreItem.innerHTML = `
+                <p style="color: #b0b0b0; margin: 0;">AI评分</p>
+                <p style="color: #00f0ff; font-size: 36px; margin: 5px 0 0 0;">${selectedStock.score}</p>
+            `;
+            
+            const priceItem = document.createElement('div');
+            priceItem.style = 'flex: 1; min-width: 100px; margin: 10px;';
+            priceItem.innerHTML = `
+                <p style="color: #b0b0b0; margin: 0;">最新价</p>
+                <p style="color: #ffffff; font-size: 36px; margin: 5px 0 0 0;">${selectedStock.price}</p>
+            `;
+            
+            const changeItem = document.createElement('div');
+            changeItem.style = 'flex: 1; min-width: 100px; margin: 10px;';
+            changeItem.innerHTML = `
+                <p style="color: #b0b0b0; margin: 0;">涨跌幅</p>
+                <p style="color: ${selectedStock.change.includes('+') ? '#05ffa1' : '#ff4d4d'}; font-size: 36px; margin: 5px 0 0 0;">${selectedStock.change}</p>
+            `;
+            
+            stockData.appendChild(scoreItem);
+            stockData.appendChild(priceItem);
+            stockData.appendChild(changeItem);
+            resultCard.appendChild(stockData);
+            
+            // 添加股票描述
+            const stockDescription = document.createElement('div');
+            stockDescription.style = 'text-align: left; margin-top: 30px;';
+            stockDescription.innerHTML = `
+                <h3 style="color: #00f0ff; font-size: 24px; margin-top: 40px; margin-bottom: 15px;">AI选股分析</h3>
+                <p style="color: #ffffff; font-size: 18px; line-height: 1.6;">${selectedStock.description}</p>
+            `;
+            resultCard.appendChild(stockDescription);
+            
+            // 添加选股理由
+            const stockReasons = document.createElement('div');
+            stockReasons.style = 'text-align: left; margin-top: 30px;';
+            stockReasons.innerHTML = `
+                <h3 style="color: #00f0ff; font-size: 24px; margin-top: 30px; margin-bottom: 15px;">选股理由</h3>
+                <ul style="color: #ffffff; font-size: 16px; line-height: 1.8; padding-left: 20px;">
+                    ${selectedStock.reasons.map(reason => `<li>${reason}</li>`).join('')}
+                </ul>
+            `;
+            resultCard.appendChild(stockReasons);
+            
+            // 清空并添加结果
+            resultsContent.innerHTML = '';
+            resultsContent.appendChild(resultCard);
+            
+            // 添加重新选股按钮
+            const restartContainer = document.createElement('div');
+            restartContainer.className = 'restart-container';
+            restartContainer.style = 'margin-top: 40px; text-align: center;';
+            
+            const restartBtn = document.createElement('button');
+            restartBtn.id = 'restart-btn';
+            restartBtn.className = 'btn btn-primary';
+            restartBtn.textContent = '重新选股';
+            restartBtn.style = `
+                background: linear-gradient(90deg, #05ffa1, #00f0ff);
+                color: #000a1e;
+                border: none;
+                padding: 15px 40px;
+                font-size: 18px;
+                font-weight: bold;
+                border-radius: 50px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 0 15px rgba(5, 255, 161, 0.5);
+            `;
+            
+            restartBtn.addEventListener('click', restartSelection);
+            
+            restartContainer.appendChild(restartBtn);
+            resultsContent.appendChild(restartContainer);
+            
+            // 添加发光动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes glow {
+                    from {
+                        box-shadow: 0 0 20px rgba(5, 255, 161, 0.3);
+                        border-color: #05ffa1;
+                    }
+                    to {
+                        box-shadow: 0 0 40px rgba(5, 255, 161, 0.6);
+                        border-color: #00f0ff;
+                    }
                 }
-                
-                tableHTML += `
-                    <tr>
-                        <td>${stock.code}</td>
-                        <td>${stock.name}</td>
-                        <td>${stock.industry}</td>
-                        <td class="${scoreClass}">${stock.score}</td>
-                        <td>${stock.price}</td>
-                        <td>${stock.change}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHTML += `
-                    </tbody>
-                </table>
+                .restart-container button:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 0 25px rgba(5, 255, 161, 0.8);
+                }
+                .restart-container button:active {
+                    transform: scale(0.95);
+                }
             `;
-            
-            // 更新结果内容
-            resultsContent.innerHTML = tableHTML;
+            document.head.appendChild(style);
         }
         
         // 重新选股
@@ -720,30 +1135,24 @@
             freeBenefitsModal.innerHTML = `
                 <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                     <div class="modal-header flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-white">免费福利</h2>
+                        <h2 class="text-2xl font-bold text-white">免费福利：开启无忧投资之旅</h2>
                         <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
                     </div>
                     <div class="modal-body text-white">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">服务定位</h3>
-                            <p class="mb-3">「免费福利」模块是为新用户提供的基础选股工具包，包含市场热门因子的基础筛选功能，帮助用户快速了解量化选股的核心逻辑。</p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">群内配套福利</h3>
-                            <div class="space-y-4">
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">免费量化工具包</h4>
-                                    <p>群内定期更新「基础选股组合（每周 1 次）」「7 日行情可视化报告」</p>
-                                </div>
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">投资策略会资源</h4>
-                                    <p>同步《第十届财富论坛》直播回放、嘉宾分享的 "量化选股实战案例"</p>
-                                </div>
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">新人专属学习包</h4>
-                                    <p>群内领取「量化入门图文课」「零代码策略模板（如北向资金加仓筛选）」</p>
-                                </div>
+                        <p class="mb-6">踏入网站，丰富的免费福利即刻呈现在您眼前。无需任何费用，您就能下载精心编制的投资指南，从基础概念到实战技巧，深入浅出地助您搭建投资知识体系。每日更新的市场快讯，为您精准提炼当日重要财经资讯，让您第一时间掌握市场脉搏。还有不定期推出的独家优惠活动，如免费的投资课程试听、高级投资工具试用等，为您的投资之路添砖加瓦，助力您在探索投资世界的过程中轻松前行。</p>
+                         
+                        <div class="space-y-4">
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">投资指南下载</h4>
+                                <p>从基础概念到实战技巧，深入浅出地助您搭建投资知识体系</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">每日市场快讯</h4>
+                                <p>精准提炼当日重要财经资讯，让您第一时间掌握市场脉搏</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">独家优惠活动</h4>
+                                <p>不定期推出免费的投资课程试听、高级投资工具试用等</p>
                             </div>
                         </div>
                     </div>
@@ -751,88 +1160,44 @@
             `;
             document.body.appendChild(freeBenefitsModal);
 
-            // 皓月模态框
-            const moonlightModal = document.createElement('div');
-            moonlightModal.id = 'moonlight-modal';
-            moonlightModal.className = 'modal hidden';
-            moonlightModal.innerHTML = `
+            // 皓月AI模态框
+            const moonlightAIModal = document.createElement('div');
+            moonlightAIModal.id = 'moonlight-ai-modal';
+            moonlightAIModal.className = 'modal hidden';
+            moonlightAIModal.innerHTML = `
                 <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                     <div class="modal-header flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-white">皓月</h2>
+                        <h2 class="text-2xl font-bold text-white">皓月AI：引领智能投资变革</h2>
                         <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
                     </div>
                     <div class="modal-body text-white">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">服务定位</h3>
-                            <p class="mb-3">皓月 3.0」的高端隐藏模块，是日斗投资、主观量化等联合机构共同打造的 "进阶工具包"，不对外公开功能详情，仅面向飞书群用户开放体验资格。</p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">群内体验权益</h3>
-                            <div class="space-y-4">
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">每周 1 次「皓月专属策略推送」</h4>
-                                    <p>由专业团队提供的 "中高级选股策略"（如行业轮动、事件驱动策略），仅群内用户可查看策略逻辑与标的。</p>
-                                </div>
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">每月 2 次「机构级数据体验」</h4>
-                                    <p>开放专业团队的 "全量研报、机构持仓明细、行业高频数据"（数据维度是基础功能的 3 倍），仅支持在群内查看，不可下载。</p>
-                                </div>
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-2">专属顾问对接</h4>
-                                    <p>体验期间可预约专业团队的量化顾问，1 对 1 解答 "策略优化、因子调整" 疑问。</p>
-                                </div>
-                            </div>
-                        </div>
-                        
+                        <p class="mb-6">皓月AI是我们自主研发的智能投资助手，它是现代科技与金融智慧深度融合的结晶。依托强大的人工智能算法，皓月AI实时扫描全球金融市场，分析海量数据，从错综复杂的信息中挖掘关键投资线索。无论是宏观经济趋势预测，还是微观企业财务状况评估，它都能精准把握。通过对市场行为模式的学习，皓月AI能够提前预测市场波动，为您提供及时、准确的投资建议，如同一位不知疲倦的投资专家，24小时为您保驾护航，让您的投资决策更加科学、智能。</p>
+                         
                         <div style="margin-bottom: 30px;">
                             <h3 style="color: #667eea; margin-bottom: 15px;">皓月AI核心优势</h3>
-                            <p style="margin-bottom: 15px;">「皓月」以任务级分时共享为核心理念，调度系统秒级响应，让每个研究人员都能拥有顺畅的训练体验。同时，平台配备强大的软件层支持：高性能算子库（hfai.nn）、分布式训练通讯框架（hfreduce）、专为AI开发而生的大容量高带宽文件系统（3FS），让AI模型能自如扩展到多节点之上，进行大规模并行训练，体验极致性能。</p>
-                        </div>
-                        
-                        <div style="margin-bottom: 30px;">
-                            <h3 style="color: #667eea; margin-bottom: 15px;">技术指标</h3>
-                            <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px;">
-                                <div style="text-align: center; background: rgba(15, 23, 42, 0.8); border-radius: 8px; padding: 20px; min-width: 120px;">
-                                    <div style="font-size: 36px; font-weight: bold; color: #667eea;" class="tech-indicator">96%</div>
-                                    <div style="color: #94a3b8;">集群使用率</div>
-                                </div>
-                                <div style="text-align: center; background: rgba(15, 23, 42, 0.8); border-radius: 8px; padding: 20px; min-width: 120px;">
-                                    <div style="font-size: 36px; font-weight: bold; color: #667eea;" class="tech-indicator">85%</div>
-                                    <div style="color: #94a3b8;">GPU使用率</div>
-                                </div>
-                                <div style="text-align: center; background: rgba(15, 23, 42, 0.8); border-radius: 8px; padding: 20px; min-width: 120px;">
-                                    <div style="font-size: 28px; font-weight: bold; color: #667eea;" class="tech-indicator">8.0 TB/s</div>
-                                    <div style="color: #94a3b8;">读取带宽</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <h3 style="color: #667eea; margin-bottom: 15px;">皓月模型特点</h3>
                             <ul style="list-style-type: none; padding-left: 0;">
                                 <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #667eea;">•</span>
-                                    多因子分析：综合考虑基本面、技术面、市场情绪等多个维度
+                                    实时市场扫描与海量数据分析
                                 </li>
                                 <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #667eea;">•</span>
-                                    市场情绪识别：通过NLP技术分析市场热点和情绪变化
+                                    宏观经济趋势预测与微观企业财务评估
                                 </li>
                                 <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #667eea;">•</span>
-                                    趋势预测：基于深度学习算法预测股价短期和中期趋势
+                                    市场行为模式学习与波动预测
                                 </li>
                                 <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
                                     <span style="position: absolute; left: 0; color: #667eea;">•</span>
-                                    风险评估：实时监测市场风险，提供风险预警和控制建议
+                                    24小时不间断的投资建议支持
                                 </li>
                             </ul>
                         </div>
                     </div>
                 </div>
             `;
-            document.body.appendChild(moonlightModal);
+            document.body.appendChild(moonlightAIModal);
 
             // 量化指标模态框
             const quantIndicatorsModal = document.createElement('div');
@@ -841,24 +1206,25 @@
             quantIndicatorsModal.innerHTML = `
                 <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                     <div class="modal-header flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-white">量化指标</h2>
+                        <h2 class="text-2xl font-bold text-white">量化指标：精准投资的导航灯</h2>
                         <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
                     </div>
                     <div class="modal-body text-white">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">指标体系</h3>
-                            <p class="mb-3">「核心因子分类」：基础因子（PE、PB、营收增速等）沿用行业标准，特色因子（如 "高频量价因子""AI 情绪因子"）源自专业技术体系，"价值因子" 参考成熟的价值投资逻辑。</p>
-                            <p class="mb-3">「因子计算逻辑」：以 "多因子模型" 为例，公开各因子权重（如 "高频量价因子占比 25%""成长因子占比 30%"），数据标准化方式采用专业标准。</p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">模型透明度</h3>
-                            <p>公开「专业团队共同认证的回测报告」，展示近 3 年 "选股组合 vs 沪深 300 指数" 的超额收益曲线，回测数据由专业团队验证，确保真实性。</p>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">工具辅助</h3>
-                            <p>提供「指标自定义计算器」，输入个股代码可查看「个股在各因子的得分、行业排名」，排名数据源自联合机构共享的 "全市场因子数据库"。</p>
+                        <p class="mb-6">量化指标是我们为投资者打造的投资决策利器。这里汇聚了一系列经过严格筛选和验证的量化指标，从风险评估到收益预测，全方位为您呈现投资项目的真实面貌。例如，通过独特的市盈率相对盈利增长比率（PEG）指标，您可以快速判断股票的估值是否合理，寻找被市场低估的潜力股；而波动率指标则能帮助您直观了解投资产品的风险水平，合理规划资产配置。每个量化指标都配备详细的解读与历史数据回溯，让您不仅知其然，更知其所以然，凭借数据的力量做出明智的投资决策。</p>
+                         
+                        <div class="space-y-4">
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">PEG指标</h4>
+                                <p>通过市盈率相对盈利增长比率，快速判断股票的估值是否合理，寻找被市场低估的潜力股</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">波动率指标</h4>
+                                <p>直观了解投资产品的风险水平，帮助您合理规划资产配置</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">详细解读与历史数据</h4>
+                                <p>每个量化指标都配备详细的解读与历史数据回溯，让您不仅知其然，更知其所以然</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -872,39 +1238,24 @@
             partnerInstitutionsModal.innerHTML = `
                 <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                     <div class="modal-header flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-white">联合机构</h2>
+                        <h2 class="text-2xl font-bold text-white">联合机构：专业铸就强大后盾</h2>
                         <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
                     </div>
                     <div class="modal-body text-white">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">合作机构名单及价值</h3>
-                            <div class="space-y-4">
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-1">日斗投资</h4>
-                                    <p>资源整合方，牵头《第十届财富论坛投资策略会》，负责飞书群运营与福利落地，提供 "策略会直播、嘉宾资源"。</p>
-                                </div>
-                                <div class="bg-white/5 p-4 rounded-lg">
-                                    <h4 class="font-semibold text-[#05ffa1] mb-1">聚财众发</h4>
-                                    <p>数据合作方，提供 "机构持仓明细、行业高频数据"，支撑 "皓月" 模块的进阶数据需求。</p>
-                                </div>
+                        <p class="mb-6">我们与众多行业内的顶尖联合机构建立了深度合作关系。这些机构涵盖了知名金融学府、权威投资研究机构以及创新型金融科技企业。与知名金融学府的合作，为我们带来前沿的学术理论和创新的研究成果，确保我们的投资理念始终与时代同步；权威投资研究机构凭借其丰富的市场经验和深厚的行业洞察力，为我们提供精准的市场分析和投资策略建议；创新型金融科技企业则为平台注入先进的技术力量，推动我们的产品和服务不断升级。多方优势资源的整合，让我们的平台拥有坚实的专业基础，为您提供高质量、全方位的投资服务。</p>
+                         
+                        <div class="space-y-4">
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">知名金融学府</h4>
+                                <p>带来前沿的学术理论和创新的研究成果，确保投资理念始终与时代同步</p>
                             </div>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">合作形式</h3>
-                            <ul class="list-disc list-inside space-y-2 pl-4">
-                                <li>「技术合作」：与专业技术团队联合开发 "多因子模型""AI 情绪因子"</li>
-                                <li>「资源合作」：与日斗投资联合运营飞书群，同步《财富论坛》资源；共享机构级数据</li>
-                                <li>「策略共创」：与专业团队联合研发 "皓月" 模块的中高级策略</li>
-                            </ul>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">机构背书</h3>
-                            <div class="space-y-4">
-                                <div class="bg-white/5 p-4 rounded-lg italic">
-                                    <p>日斗投资 CEO："《第十届财富论坛》的核心策略资源已同步至飞书群，结合'皓月'工具，能为用户提供'策略 + 工具'的一站式服务。"</p>
-                                </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">权威投资研究机构</h4>
+                                <p>凭借丰富的市场经验和深厚的行业洞察力，提供精准的市场分析和投资策略建议</p>
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-lg">
+                                <h4 class="font-semibold text-[#05ffa1] mb-2">创新型金融科技企业</h4>
+                                <p>为平台注入先进的技术力量，推动产品和服务不断升级</p>
                             </div>
                         </div>
                     </div>
@@ -912,40 +1263,44 @@
             `;
             document.body.appendChild(partnerInstitutionsModal);
 
-            // 声明模态框
-            const statementModal = document.createElement('div');
-            statementModal.id = 'statement-modal';
-            statementModal.className = 'modal hidden';
-            statementModal.innerHTML = `
+            // 关于我们模态框
+            const aboutUsModal = document.createElement('div');
+            aboutUsModal.id = 'about-us-modal';
+            aboutUsModal.className = 'modal hidden';
+            aboutUsModal.innerHTML = `
                 <div class="modal-content bg-white/10 backdrop-blur-md p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                     <div class="modal-header flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-bold text-white">声明</h2>
+                        <h2 class="text-2xl font-bold text-white">关于我们：用心打造投资家园</h2>
                         <button class="modal-close text-white hover:text-gray-300 text-xl">×</button>
                     </div>
                     <div class="modal-body text-white">
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">风险提示</h3>
-                            <p class="mb-3">量化选股基于历史数据与专业模型算法，不构成投资建议；股市有风险，投资需谨慎；"皓月"模块的过往表现不代表未来收益，用户应结合自身风险承受能力决策；飞书群内分享的策略与数据仅作参考，不可作为实盘操作唯一依据。</p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">版权说明</h3>
-                            <p class="mb-3">"量化选股器"软件、数据（含专业团队提供的因子模型、行情数据）、图文内容，知识产权归我司及合作团队共同所有，未经授权禁止转载、商用；飞书群内资源（如直播回放、策略报告）仅限群内用户个人使用，禁止转发。</p>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">免责条款</h3>
-                            <p>因不可抗力（如服务器故障、行情源异常）或数据更新延迟导致的选股偏差，我司及合作团队不承担赔偿责任；用户需理解量化工具的局限性，不可过度依赖。</p>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-xl font-semibold mb-3 text-[#00f0ff]">隐私政策</h3>
-                            <p>严格保护用户个人信息，不向第三方泄露；如需使用用户数据优化模型，会提前通过飞书群征求用户同意。</p>
+                        <p class="mb-6">我们是一支充满热情与专业素养的团队，对投资领域怀揣着无限的热爱与执着。团队成员来自金融、科技、数据分析等多个领域，拥有丰富的行业经验和专业知识。我们深知投资对于每一个人的重要性，因此致力于打造一个专业、便捷、值得信赖的投资服务平台。我们以用户为中心，不断倾听用户需求，优化产品体验，力求为您提供最优质的服务。在这里，您将感受到我们的用心与专注，与我们一同开启一段精彩纷呈的投资之旅，共同实现财富的增长与人生的梦想。</p>
+                         
+                        <div style="margin-bottom: 30px;">
+                            <h3 style="color: #667eea; margin-bottom: 15px;">我们的理念</h3>
+                            <ul style="list-style-type: none; padding-left: 0;">
+                                <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #667eea;">•</span>
+                                    专业：汇聚多领域精英，提供专业投资服务
+                                </li>
+                                <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #667eea;">•</span>
+                                    便捷：打造用户友好的平台，让投资变得简单
+                                </li>
+                                <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #667eea;">•</span>
+                                    信赖：以诚信为本，建立长期可信赖的合作关系
+                                </li>
+                                <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                                    <span style="position: absolute; left: 0; color: #667eea;">•</span>
+                                    创新：不断突破，引领投资服务的创新发展
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             `;
-            document.body.appendChild(statementModal);
+            document.body.appendChild(aboutUsModal);
         }
 
         // 初始化菜单模态框
@@ -1004,10 +1359,10 @@
                         freeBenefitsModal.style.display = 'flex';
                         break;
 
-                    case '皓月':
-                        const moonlightModal = document.getElementById('moonlight-modal');
-                        moonlightModal.classList.remove('hidden');
-                        moonlightModal.style.display = 'flex';
+                    case '皓月AI':
+                        const moonlightAIModal = document.getElementById('moonlight-ai-modal');
+                        moonlightAIModal.classList.remove('hidden');
+                        moonlightAIModal.style.display = 'flex';
                         break;
                     case '量化指标':
                         const quantIndicatorsModal = document.getElementById('quant-indicators-modal');
@@ -1019,10 +1374,10 @@
                         partnerInstitutionsModal.classList.remove('hidden');
                         partnerInstitutionsModal.style.display = 'flex';
                         break;
-                    case '声明':
-                        const statementModal = document.getElementById('statement-modal');
-                        statementModal.classList.remove('hidden');
-                        statementModal.style.display = 'flex';
+                    case '关于我们':
+                        const aboutUsModal = document.getElementById('about-us-modal');
+                        aboutUsModal.classList.remove('hidden');
+                        aboutUsModal.style.display = 'flex';
                         break;
                 }
             });
@@ -1068,12 +1423,12 @@
             });
         }, 100);
         
-        // 测试函数：允许通过控制台直接测试声明模态框
-        window.testStatementModal = function() {
-            console.log('Testing statement modal...');
-            const statementModal = document.getElementById('statement-modal');
-            if (statementModal) {
-                console.log('Statement modal found:', statementModal);
+        // 测试函数：允许通过控制台直接测试关于我们模态框
+        window.testAboutUsModal = function() {
+            console.log('Testing about us modal...');
+            const aboutUsModal = document.getElementById('about-us-modal');
+            if (aboutUsModal) {
+                console.log('About us modal found:', aboutUsModal);
                 
                 // 先隐藏所有模态框
                 document.querySelectorAll('.modal').forEach(function(modal) {
@@ -1084,12 +1439,12 @@
                 // 隐藏首页标题
                 document.querySelector('.title-container').classList.add('title-hidden');
                 
-                // 显示声明模态框
-                statementModal.classList.remove('hidden');
-                statementModal.style.display = 'flex';
-                console.log('Statement modal should be visible now');
+                // 显示关于我们模态框
+                aboutUsModal.classList.remove('hidden');
+                aboutUsModal.style.display = 'flex';
+                console.log('About us modal should be visible now');
             } else {
-                console.error('Statement modal not found!');
+                console.error('About us modal not found!');
             }
         };
         

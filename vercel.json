@@ -1,0 +1,25 @@
+{
+  "name": "stock-selector",
+  "version": 2,
+  "outputDirectory": "src",
+  "builds": [
+    {
+      "src": "src/index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "src/**/*.{js,css,png,jpg,jpeg,gif,svg,ttf}",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/$1",
+      "headers": {
+        "access-control-allow-origin": "*"
+      }
+    }
+  ],
+  "public": true
+}

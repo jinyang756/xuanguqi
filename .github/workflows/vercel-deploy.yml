@@ -18,8 +18,8 @@ jobs:
           sparse-checkout: |
             src/
             vercel.json
+            package.json
             .gitignore
-            config/vercel.json
       
       - name: Trigger Vercel Deployment via Webhook
         run: |
@@ -33,12 +33,11 @@ jobs:
           ls -la src/
           ls -la config/
           # 检查vercel.json配置文件
-          if [ -f "config/vercel.json" ]; then
-            echo "Vercel配置文件存在:"
-            cat config/vercel.json
-          elif [ -f "vercel.json" ]; then
-            echo "Vercel配置文件存在:"
+          if [ -f "vercel.json" ]; then
+            echo "Vercel配置文件存在:" 
             cat vercel.json
+            echo "Package.json文件存在:" 
+            cat package.json
           else
-            echo "警告: 未找到vercel.json配置文件"
+            echo "错误: 未找到vercel.json配置文件"
           fi
