@@ -51,7 +51,8 @@ class SimpleStockSelector:
             except Exception as e:
                 pass
         self.results.sort(key=lambda x: x['score'], reverse=True)
-        return self.results
+        # 只返回优选出的第一只个股
+        return self.results[:1] if self.results else []
 
 def handler(request):
     try:
