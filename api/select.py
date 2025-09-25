@@ -1,7 +1,8 @@
 import json
-import akshare as ak
 import pandas as pd
 import re
+import json
+import os
 
 class SimpleStockSelector:
     def __init__(self):
@@ -210,28 +211,30 @@ def handler(request):
         results = []
         
         if strategy == "short_term_growth":
-            # 使用短期增长潜力选股策略
+            # 使用本地JSON数据进行短期增长潜力选股策略
             try:
-                # 获取A股实时数据（使用akshare的函数）
-                stock_df = ak.stock_zh_a_spot_em()
+                # 读取本地JSON数据文件
+                json_file_path = os.path.join(os.path.dirname(__file__), '../data/processed/stock_data_strategy_test.json')
+                with open(json_file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
                 
-                # 转换DataFrame为字典列表，并过滤A股股票
+                # 转换数据结构，使字段名与代码中的期望保持一致
                 stock_data = []
-                for _, row in stock_df.iterrows():
+                for stock in data['data']:
                     try:
                         # 构建符合select_stock_for_short_term_growth方法要求的数据结构
                         stock_info = {
-                            'code': str(row['代码']),
-                            'name': str(row['名称']),
-                            'price': float(row['最新价']) if pd.notna(row['最新价']) else 0,
-                            'priceChange': float(row['涨跌幅']) if pd.notna(row['涨跌幅']) else 0,
-                            'industry': '未知',  # 行业信息需要额外获取
-                            'pe': float(row['市盈率-动态']) if pd.notna(row['市盈率-动态']) else 0,
-                            'roe': 0,  # ROE需要额外获取
-                            'marketCap': float(row['总市值']) * 100000000 if pd.notna(row['总市值']) else 0,
-                            'volume': float(row['成交额']) if pd.notna(row['成交额']) else 0,
-                            'turnoverRate': float(row['换手率']) if pd.notna(row['换手率']) else 0,
-                            'pb': float(row['市净率']) if pd.notna(row['市净率']) else 0
+                            'code': stock['stock_code'],
+                            'name': stock['stock_name'],
+                            'price': float(stock['close_price']),
+                            'priceChange': float(stock['change_percent']),
+                            'industry': stock['industry'],
+                            'pe': float(stock['pe']),
+                            'roe': float(stock['roe']),
+                            'marketCap': float(stock['market_cap']),
+                            'volume': float(stock['volume']),
+                            'turnoverRate': float(stock['volume']) / float(stock['market_cap']) * 100 if float(stock['market_cap']) > 0 else 0,
+                            'pb': float(stock['pb'])
                         }
                         
                         # 检查是否为A股股票
@@ -239,6 +242,7 @@ def handler(request):
                             stock_data.append(stock_info)
                     except (ValueError, TypeError) as e:
                         # 忽略数据格式错误的股票
+                        print(f"数据转换错误: {str(e)}")
                         continue
                 
                 print(f"已过滤出 {len(stock_data)} 支A股股票")
@@ -251,7 +255,7 @@ def handler(request):
                 print(f"短期增长潜力选股完成，选出 {len(results)} 支股票")
             except Exception as e:
                 print(f"短期增长潜力选股失败: {str(e)}")
-                # 如果获取实时数据失败，回退到使用历史数据的突破策略
+                # 如果获取本地数据失败，回退到使用历史数据的突破策略
                 results = fallback_to_breakout_strategy()
         else:
             # 默认使用突破策略
@@ -274,33 +278,31 @@ def handler(request):
         }
 
 def fallback_to_breakout_strategy():
-    """当短期增长潜力选股失败时，回退到使用历史数据的突破策略"""
+    """当短期增长潜力选股失败时，回退到使用本地数据的突破策略"""
     try:
-        # 示例：获取贵州茅台和五粮液的日线数据
-        codes = ['sh600519', 'sz000858']
-        data_dict = {}
+        # 读取本地JSON数据文件
+        json_file_path = os.path.join(os.path.dirname(__file__), '../data/processed/stock_data_strategy_test.json')
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
         
-        print(f"开始获取 {len(codes)} 支股票的历史数据")
+        # 过滤出策略为breakout的股票
+        breakout_stocks = [stock for stock in data['data'] if stock.get('strategy') == 'breakout']
         
-        for code in codes:
-            try:
-                print(f"正在获取股票 {code} 的数据")
-                df = ak.stock_zh_a_hist(symbol=code, period="daily", start_date="20230101")
-                df = df.rename(columns={
-                    '开盘': 'open',
-                    '收盘': 'close',
-                    '最高': 'high',
-                    '最低': 'low',
-                    '成交量': 'volume'
-                })
-                df.index = pd.to_datetime(df['日期'])
-                data_dict[code] = df[['open', 'close', 'high', 'low', 'volume']]
-                print(f"成功获取股票 {code} 的数据")
-            except Exception as e:
-                print(f"获取股票 {code} 的数据失败: {str(e)}")
-        
-        selector = SimpleStockSelector()
-        results = selector.run_screening(data_dict)
+        # 使用筛选出的第一支突破策略股票
+        results = []
+        if breakout_stocks:
+            # 转换数据结构为API预期的格式
+            top_stock = breakout_stocks[0]
+            result = {
+                'stock_code': top_stock['stock_code'],
+                'signal_date': data['timestamp'].split('T')[0],
+                'close_price': float(top_stock['close_price']),
+                'breakout_level': float(top_stock['close_price']) * 0.98,  # 模拟突破水平
+                'volume_ratio': 2.5,  # 模拟成交量比率
+                'breakout_strength': 2.3,  # 模拟突破强度
+                'score': float(top_stock['score'])
+            }
+            results = [result]
         
         print(f"突破策略选股完成，共选出 {len(results)} 支符合条件的股票")
         return results

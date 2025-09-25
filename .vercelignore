@@ -1,0 +1,17 @@
+# 忽略不必要的文件和目录
+node_modules/
+data/
+.env
+*.log
+*.tmp
+*.temp
+.cache/
+.DS_Store
+.git/
+.github/
+.vscode/
+*.local
+*.bak
+*.swp
+*.swo
+*~
