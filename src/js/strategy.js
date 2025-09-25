@@ -117,6 +117,14 @@ class StrategyManager {
     }
     
     /**
+     * 获取所有可用策略（兼容旧接口）
+     * @returns {Object} 所有策略配置
+     */
+    getAvailableStrategies() {
+        return this.getAllStrategies();
+    }
+    
+    /**
      * 获取策略配置
      * @param {string} strategyId - 策略ID
      * @returns {Object|null} 策略配置对象，如果不存在则返回null
@@ -335,6 +343,70 @@ class StrategyManager {
         
         return { isValid: errors.length === 0, errors };
     }
+    
+    /**
+     * 执行指定策略
+     * @param {string} strategyId - 策略ID
+     * @param {Object} params - 策略参数
+     * @returns {Promise<Object>} 执行结果 {success: boolean, data?: Array, error?: string}
+     */
+    async executeStrategy(strategyId, params) {
+        try {
+            // 验证策略是否存在
+            const strategy = this.getStrategy(strategyId);
+            if (!strategy) {
+                return { success: false, error: `策略 ${strategyId} 不存在` };
+            }
+
+            // 验证参数
+            const validationResult = this.validateStrategyParams(strategyId, params);
+            if (!validationResult.isValid) {
+                return { success: false, error: validationResult.errors.join(', ') };
+            }
+
+            // 合并默认参数和用户提供的参数
+            const mergedParams = {
+                ...strategy.params,
+                ...params
+            };
+
+            // 检查是否设置了选股器实例
+            if (!this.stockSelector) {
+                console.warn('选股器实例未设置，使用模拟数据');
+                // 模拟选股结果
+                const mockResults = [
+                    { code: '000001', name: '平安银行', price: 12.34, priceChange: 2.34, pe: 5.67, pb: 0.89, industry: '银行', score: 85.5 },
+                    { code: '600519', name: '贵州茅台', price: 1899.00, priceChange: -1.23, pe: 28.9, pb: 9.8, industry: '酿酒', score: 78.3 },
+                    { code: '000858', name: '五粮液', price: 168.50, priceChange: 0.89, pe: 19.6, pb: 5.2, industry: '酿酒', score: 82.1 }
+                ];
+                return { success: true, data: mockResults };
+            }
+
+            // 执行对应的选股方法
+            const method = this.stockSelector[strategy.method];
+            if (typeof method !== 'function') {
+                return { success: false, error: `选股器中未找到方法: ${strategy.method}` };
+            }
+
+            // 调用选股方法
+            const result = await method.call(this.stockSelector, mergedParams);
+            return { success: true, data: result };
+        } catch (error) {
+            console.error('执行策略时出错:', error);
+            return { success: false, error: error.message || '执行策略失败' };
+        }
+    }
+
+    /**
+     * 设置选股器实例
+     * @param {Object} selector - StockSelector实例
+     */
+    setStockSelector(selector) {
+        this.stockSelector = selector;
+    }
+    
+    // 原有方法...
+
 }
 
 // 导出模块

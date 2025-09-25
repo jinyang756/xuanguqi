@@ -3,7 +3,7 @@
  * 提供多因子选股、风险评估和数据清洗功能
  */
 
-class StockSelector {
+export class StockSelector {
     constructor(stockData = []) {
         this.stockData = stockData;
         this.normalizationFactors = null;
@@ -18,6 +18,14 @@ class StockSelector {
         this.stockData = data;
         this.normalizationFactors = null;
         this.cleanedData = null; // 重置缓存
+    }
+    
+    /**
+     * 获取原始股票数据
+     * @returns {Array} 原始股票数据
+     */
+    getStockData() {
+        return this.stockData;
     }
 
     /**
@@ -254,7 +262,136 @@ class StockSelector {
 
         return growthStocks.slice(0, topN);
     }
+    
+    /**
+     * 短期突破选股
+     * @param {Object} params - 突破策略参数
+     * @returns {Array} 选股结果
+     */
+    selectByBreakout(params = {}) {
+        const data = this.getCleanedData();
+        if (!data || data.length === 0) return [];
+
+        const { 
+            volumeRatioThreshold = 1.5,      // 量比阈值
+            changePercentThreshold = 2,      // 涨幅阈值（百分比）
+            turnoverRateThreshold = 5,       // 换手率阈值（百分比）
+            priceChangeThreshold = 3,        // 价格变化阈值（百分比）
+            daysRangeThreshold = 15,         // 天数范围阈值
+            marketCapThreshold = 10000000000 // 市值阈值（元）
+        } = params;
+
+        // 筛选突破形态的股票
+        const breakoutStocks = data.filter(stock => {
+            // 实际应用中需要更多技术指标数据，这里简化实现
+            return stock.change_percent >= changePercentThreshold &&
+                   stock.market_cap >= marketCapThreshold &&
+                   stock.volume > 10000000; // 高成交量
+        });
+
+        // 按涨幅和成交量综合排序
+        breakoutStocks.sort((a, b) => (b.change_percent * 0.6 + b.volume * 0.4) - 
+                                      (a.change_percent * 0.6 + a.volume * 0.4));
+
+        return breakoutStocks;
+    }
+
+    /**
+     * 低估值选股
+     * @param {Object} params - 低估值策略参数
+     * @returns {Array} 选股结果
+     */
+    selectLowValuation(params = {}) {
+        const data = this.getCleanedData();
+        if (!data || data.length === 0) return [];
+
+        const { 
+            peThreshold = 15,       // PE阈值
+            pbThreshold = 1.5,      // PB阈值
+            roeThreshold = 10,      // ROE阈值
+            marketCapMin = 5000000000,  // 最小市值
+            dividendRateMin = 2     // 最小股息率
+        } = params;
+
+        // 筛选低估值股票
+        const lowValuationStocks = data.filter(stock => {
+            // 低PE、低PB、高ROE、大市值
+            return stock.pe <= peThreshold &&
+                   stock.pb <= pbThreshold &&
+                   stock.roe >= roeThreshold &&
+                   stock.market_cap >= marketCapMin &&
+                   (typeof stock.dividend_rate === 'number' ? stock.dividend_rate >= dividendRateMin : true);
+        });
+
+        // 按ROE降序排序，ROE越高越好
+        lowValuationStocks.sort((a, b) => b.roe - a.roe);
+
+        return lowValuationStocks;
+    }
+
+    /**
+     * 动量策略选股
+     * @param {Object} params - 动量策略参数
+     * @returns {Array} 选股结果
+     */
+    selectByMomentum(params = {}) {
+        const data = this.getCleanedData();
+        if (!data || data.length === 0) return [];
+
+        const { 
+            periodDays = 20,        // 计算周期（天）
+            topPercent = 10,        // 选取前百分之几的股票
+            minVolume = 10000000    // 最小成交量
+        } = params;
+
+        // 筛选高成交量的股票
+        const highVolumeStocks = data.filter(stock => stock.volume >= minVolume);
+        
+        if (highVolumeStocks.length === 0) return [];
+
+        // 按涨跌幅降序排序（模拟动量效应）
+        highVolumeStocks.sort((a, b) => b.change_percent - a.change_percent);
+
+        // 选取前topPercent%的股票
+        const topCount = Math.max(1, Math.floor(highVolumeStocks.length * topPercent / 100));
+
+        return highVolumeStocks.slice(0, topCount);
+    }
+
+    /**
+     * 根据策略ID执行选股
+     * @param {string} strategyId - 策略ID
+     * @param {Object} params - 策略参数
+     * @returns {Array} 选择的股票列表
+     */
+    executeStrategy(strategyId, params = {}) {
+        console.log(`执行选股策略: ${strategyId}`);
+        
+        // 根据策略ID执行相应的选股策略
+        switch(strategyId) {
+            case 'composite':
+            case 'default':
+                return this.selectByCompositeScore(params.weights || {}, params.count || 20);
+            case 'industryRotation':
+            case 'industry':
+                return this.selectByIndustryRotation(params.industries || params.targetIndustries || [], params.count || params.topN || 5);
+            case 'value':
+                return this.selectValueStocks(params.count || params.topN || 20);
+            case 'growth':
+                return this.selectGrowthStocks(params.count || params.topN || 20);
+            case 'breakout':
+                return this.selectByBreakout(params);
+            case 'lowValuation':
+                return this.selectLowValuation(params);
+            case 'momentum':
+                return this.selectByMomentum(params);
+            default:
+                // 默认使用综合评分策略
+                console.warn(`未知策略ID: ${strategyId}，使用默认综合评分策略`);
+                return this.selectByCompositeScore({}, params.count || params.topN || 20);
+        }
+    }
 }
 
-// 导出模块
+// 默认导出类
 export default StockSelector;
