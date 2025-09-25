@@ -62,7 +62,7 @@ function executePythonScript(scriptPath, args = []) {
 
 // API路由
 
-// 登录接口 - 获取验证码（简化版）
+// 登录接口 - 获取验证码
 app.post('/api/login/send-code', async (req, res) => {
   try {
     const { phoneNumber } = req.body;
@@ -71,8 +71,14 @@ app.post('/api/login/send-code', async (req, res) => {
       return res.status(400).json({ success: false, message: '请提供有效的手机号码' });
     }
     
+    // 使用authMiddleware生成并保存验证码
+    const verificationCode = authMiddleware.saveVerificationCode(phoneNumber);
+    
     // 模拟发送验证码（实际应用中应该调用短信服务）
-    loggerMiddleware.info('发送验证码', { phoneNumber });
+    loggerMiddleware.info('验证码已生成并准备发送', { phoneNumber });
+    
+    // 注意：在实际生产环境中，这里应该调用短信服务发送验证码
+    // 为了安全起见，不要在响应中返回验证码
     
     // 检查是否为超级管理员
     const isSuperAdmin = appConfig.superAdmin.phoneNumbers.includes(phoneNumber);
@@ -80,10 +86,12 @@ app.post('/api/login/send-code', async (req, res) => {
     res.json({
       success: true,
       message: '验证码已发送',
-      isSuperAdmin
+      isSuperAdmin,
+      // 在真实环境中不要返回验证码，这里仅用于开发测试
+      // verificationCode: process.env.NODE_ENV === 'development' ? verificationCode : undefined
     });
   } catch (error) {
-    loggerMiddleware.error(error);
+    loggerMiddleware.error('发送验证码失败', { error: error.message });
     res.status(500).json({ success: false, message: '发送验证码失败' });
   }
 });

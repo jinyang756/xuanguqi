@@ -545,7 +545,7 @@ class TushareAPI {
      */
     showPhoneVerification(onSuccess, stock) {
         // 检查是否已经验证过
-        if (localStorage.getItem('phone_verified')) {
+        if (localStorage.getItem('phone_verified') && this.checkPhoneVerification()) {
             onSuccess();
             return;
         }
@@ -557,7 +557,7 @@ class TushareAPI {
             modal.id = 'phoneVerificationModal';
             modal.className = 'phone-verification-modal';
             
-            // 添加样式
+            // 添加样式 - 与深色主题统一
             const style = document.createElement('style');
             style.textContent = `
                 .phone-verification-modal {
@@ -566,65 +566,144 @@ class TushareAPI {
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
+                    background: rgba(0, 0, 0, 0.7);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     z-index: 2000;
+                    animation: fadeIn 0.3s ease-out;
                 }
+                
                 .phone-verification-content {
-                    background: white;
+                    background: #1a1a1a;
                     padding: 30px;
                     border-radius: 10px;
                     width: 90%;
                     max-width: 400px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                    border: 1px solid #333;
+                    position: relative;
+                    animation: slideUp 0.3s ease-out;
                 }
+                
+                .phone-verification-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                
                 .phone-verification-content h2 {
-                    margin: 0 0 20px 0;
+                    margin: 0;
                     text-align: center;
-                    color: #333;
+                    color: #fff;
+                    font-size: 20px;
+                    flex: 1;
                 }
+                
                 .phone-verification-content p {
                     margin: 0 0 20px 0;
-                    color: #666;
+                    color: #999;
                     text-align: center;
+                    font-size: 14px;
                 }
+                
                 .phone-input {
                     width: 100%;
-                    padding: 10px;
+                    padding: 12px;
                     font-size: 16px;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
+                    background: #2a2a2a;
+                    border: 1px solid #444;
+                    border-radius: 6px;
                     margin-bottom: 15px;
                     box-sizing: border-box;
+                    color: #fff;
+                    transition: border-color 0.3s;
                 }
+                
+                .phone-input:focus {
+                    outline: none;
+                    border-color: #4a9eff;
+                }
+                
                 .verify-btn {
                     width: 100%;
-                    padding: 10px;
+                    padding: 12px;
                     font-size: 16px;
-                    background: #007bff;
+                    background: #4a9eff;
                     color: white;
                     border: none;
-                    border-radius: 5px;
+                    border-radius: 6px;
                     cursor: pointer;
+                    transition: background-color 0.3s;
+                    margin-top: 10px;
                 }
+                
                 .verify-btn:hover {
-                    background: #0056b3;
+                    background: #357abd;
                 }
+                
+                .verify-btn:disabled {
+                    background: #555;
+                    cursor: not-allowed;
+                }
+                
                 .error-message {
-                    color: #e34234;
+                    color: #ff5757;
                     text-align: center;
                     margin-top: 10px;
-                    min-height: 20px;
+                    min-height: 24px;
+                    font-size: 14px;
+                }
+                
+                .close-btn {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: none;
+                    border: none;
+                    color: #666;
+                    font-size: 20px;
+                    cursor: pointer;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: all 0.3s;
+                }
+                
+                .close-btn:hover {
+                    background: #333;
+                    color: #fff;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                
+                @keyframes slideUp {
+                    from {
+                        transform: translateY(20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
                 }
             `;
             document.head.appendChild(style);
             
-            // 添加模态框内容
+            // 添加模态框内容 - 包含关闭按钮
             modal.innerHTML = `
                 <div class="phone-verification-content">
-                    <h2>获取选股结果</h2>
+                    <div class="phone-verification-header">
+                        <h2>获取选股结果</h2>
+                    </div>
+                    <button class="close-btn" aria-label="关闭">×</button>
                     <p>请输入手机号码进行验证，验证成功后即可查看选股结果</p>
                     <input type="tel" class="phone-input" placeholder="请输入11位手机号码" maxlength="11">
                     <div class="error-message"></div>
@@ -641,10 +720,16 @@ class TushareAPI {
         const phoneInput = modal.querySelector('.phone-input');
         const verifyBtn = modal.querySelector('.verify-btn');
         const errorMessage = modal.querySelector('.error-message');
+        const closeBtn = modal.querySelector('.close-btn');
         
         // 清空输入框和错误信息
         phoneInput.value = '';
         errorMessage.textContent = '';
+        
+        // 添加输入sanitization处理
+        function sanitizeInput(input) {
+            return input.replace(/[<>&"'/]/g, '').trim();
+        }
         
         // 验证手机号格式
         function validatePhone(phone) {
@@ -652,9 +737,18 @@ class TushareAPI {
             return pattern.test(phone);
         }
         
+        // 关闭模态框
+        function closeModal() {
+            modal.style.display = 'none';
+            // 重置状态
+            phoneInput.value = '';
+            errorMessage.textContent = '';
+        }
+        
         // 验证按钮点击事件
         function handleVerify() {
-            const phone = phoneInput.value.trim();
+            const rawPhone = phoneInput.value;
+            const phone = sanitizeInput(rawPhone);
             
             // 验证手机号格式
             if (!validatePhone(phone)) {
@@ -662,94 +756,126 @@ class TushareAPI {
                 return;
             }
             
+            // 禁用按钮防止重复提交
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = '验证中...';
+            errorMessage.textContent = '';
+            
+            // 获取环境适配的API URL
+            const apiUrl = this._getApiUrl();
+            
             // 提交手机号到后端API
-                console.log(`提交手机号: ${phone}`);
+            console.log(`提交手机号: ${phone}`);
+            
+            // 实际调用后端API来保存手机号
+            fetch(`${apiUrl}/api/save_phone`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phone: phone })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '立即验证';
                 
-                // 实际调用后端API来保存手机号
-                fetch('http://localhost:8000/api/save_phone', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ phone: phone })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // 保存手机号和验证状态到本地存储
-                     localStorage.setItem('phone_number', phone);
-                     localStorage.setItem('phone_verified', 'true');
-                     
-                     // 超级管理电话号码无限制使用，普通号码设置有效期1天
-                     const superAdminPhone = '18066668888';
-                     if (phone !== superAdminPhone) {
-                         const expireTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1天后过期
-                         localStorage.setItem('phone_verified_expire', expireTime.toString());
-                     } else {
-                         // 超级管理号码不设置过期时间
-                         localStorage.removeItem('phone_verified_expire');
-                     }
-                      
-                     // 隐藏模态框
-                     modal.style.display = 'none';
-                      
-                     // 调用成功回调
-                     onSuccess();
-                        
-                        // 显示成功提示
-                        alert(data.message || '验证成功，感谢您的支持！');
+                if (data.success) {
+                    // 保存手机号和验证状态到本地存储
+                    localStorage.setItem('phone_number', phone);
+                    localStorage.setItem('phone_verified', 'true');
+                    
+                    // 超级管理电话号码无限制使用，普通号码设置有效期1天
+                    const superAdminPhone = '18066668888';
+                    if (phone !== superAdminPhone) {
+                        const expireTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1天后过期
+                        localStorage.setItem('phone_verified_expire', expireTime.toString());
                     } else {
-                        errorMessage.textContent = data.message || '验证失败，请重试';
+                        // 超级管理号码不设置过期时间
+                        localStorage.removeItem('phone_verified_expire');
                     }
-                })
-                .catch(error => {
-                    console.error('保存手机号失败:', error);
                     
-                    // 显示友好的错误提示
-                    errorMessage.textContent = '网络错误，请稍后重试';
+                    // 隐藏模态框
+                    closeModal();
                     
-                    // 在网络错误的情况下，仍然让用户能够查看选股结果
-                    // 这是一个临时解决方案，实际项目中应该处理网络问题
-                    setTimeout(() => {
-                        alert('网络连接暂时不稳定，但我们仍然为您显示选股结果');
-                        
-                        // 保存手机号和验证状态到本地存储
-                         localStorage.setItem('phone_number', phone);
-                         localStorage.setItem('phone_verified', 'true');
-                          
-                         // 超级管理电话号码无限制使用，普通号码设置有效期1天
-                         const superAdminPhone = '18066668888';
-                         if (phone !== superAdminPhone) {
-                             const expireTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1天后过期
-                             localStorage.setItem('phone_verified_expire', expireTime.toString());
-                         } else {
-                             // 超级管理号码不设置过期时间
-                             localStorage.removeItem('phone_verified_expire');
-                         }
-                          
-                         // 隐藏模态框
-                         modal.style.display = 'none';
-                          
-                         // 调用成功回调
-                         onSuccess();
-                    }, 1500);
-                });
+                    // 调用成功回调
+                    onSuccess();
+                    
+                    // 显示成功提示
+                    if (window.showNotification) {
+                        window.showNotification(data.message || '验证成功，感谢您的支持！', 'success');
+                    } else {
+                        alert(data.message || '验证成功，感谢您的支持！');
+                    }
+                } else {
+                    errorMessage.textContent = data.message || '验证失败，请重试';
+                }
+            })
+            .catch(error => {
+                console.error('保存手机号失败:', error);
+                
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '立即验证';
+                
+                // 显示友好的错误提示
+                errorMessage.textContent = '网络错误，请检查网络连接后重试';
+                
+                // 移除在网络错误时直接验证通过的逻辑，提高安全性
+            });
         }
         
+        // 绑定this上下文
+        const boundHandleVerify = handleVerify.bind(this);
+        
         // 添加事件监听器
-        verifyBtn.onclick = handleVerify;
+        verifyBtn.onclick = boundHandleVerify;
+        closeBtn.onclick = closeModal;
         
         // 允许按Enter键提交
         phoneInput.onkeypress = function(e) {
             if (e.key === 'Enter') {
-                handleVerify();
+                boundHandleVerify();
             }
         };
+        
+        // 点击模态框外部关闭
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+        
+        // 防止冒泡
+        modal.querySelector('.phone-verification-content').onclick = function(e) {
+            e.stopPropagation();
+        };
+        
+        // 按ESC键关闭
+        document.onkeydown = function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                closeModal();
+            }
+        };
+    }
+    
+    /**
+     * 获取环境适配的API URL
+     * @private
+     * @returns {string} 适配当前环境的API URL
+     */
+    _getApiUrl() {
+        // 检测环境，根据不同环境返回不同的API URL
+        // 在实际项目中，可以根据域名或其他环境变量来判断
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8000';
+        }
+        // 生产环境可以返回相对路径或配置的生产环境URL
+        return ''; // 使用相对路径
     }
     
     /**
@@ -757,27 +883,32 @@ class TushareAPI {
      * @returns {boolean} 验证是否有效
      */
     checkPhoneVerification() {
-        const verified = localStorage.getItem('phone_verified');
-        const expireTime = localStorage.getItem('phone_verified_expire');
-        const phoneNumber = localStorage.getItem('phone_number');
-        
-        // 超级管理电话号码无限制使用
-        const superAdminPhone = '18066668888';
-        if (phoneNumber === superAdminPhone) {
-            return true;
-        }
-        
-        if (verified === 'true' && expireTime) {
-            const now = new Date().getTime();
-            if (now < parseInt(expireTime)) {
+        try {
+            const verified = localStorage.getItem('phone_verified');
+            const expireTime = localStorage.getItem('phone_verified_expire');
+            const phoneNumber = localStorage.getItem('phone_number');
+            
+            // 超级管理电话号码无限制使用
+            const superAdminPhone = '18066668888';
+            if (phoneNumber === superAdminPhone) {
                 return true;
             }
+            
+            if (verified === 'true' && expireTime) {
+                const now = new Date().getTime();
+                if (now < parseInt(expireTime)) {
+                    return true;
+                }
+            }
+            
+            // 验证已过期或不存在
+            localStorage.removeItem('phone_verified');
+            localStorage.removeItem('phone_verified_expire');
+            return false;
+        } catch (error) {
+            console.error('检查手机号验证状态失败:', error);
+            return false;
         }
-        
-        // 验证已过期或不存在
-        localStorage.removeItem('phone_verified');
-        localStorage.removeItem('phone_verified_expire');
-        return false;
     }
     
     /**
@@ -1029,13 +1160,7 @@ class TushareAPI {
             card.style.transform = config.position === 'center' ? 'translate(-50%, -50%) scale(1)' : 'translateX(0)';
             card.style.opacity = '1';
         }, 10);
-        } catch (error) {
-            console.error('显示股票详情失败:', error);
-            // 避免频繁弹出alert
-            if (console && console.warn) {
-                console.warn(`显示股票详情失败: ${error.message}`);
-            }
-        }
+
     }
     
     /**
@@ -1046,7 +1171,7 @@ class TushareAPI {
         // 简单实现：如果有baseUrl配置，则认为API可用
         // 实际项目中可以添加更复杂的健康检查逻辑
         return this.baseUrl !== '';
-    };
+    }
     
     /**
      * 模拟加载最新股票数据

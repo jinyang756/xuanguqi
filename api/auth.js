@@ -3,9 +3,13 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs').promises;
 const path = require('path');
 
-// 从环境变量或配置文件获取JWT密钥
-const JWT_SECRET = process.env.JWT_SECRET || 'your-default-secret-key'; // 实际使用时应设置为强密钥
+// 从环境变量获取JWT密钥，不再提供默认值以提高安全性
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+// 验证码存储（实际项目中应使用Redis或其他缓存机制）
+const verificationCodes = new Map(); // 存储验证码信息: { code, expireTime }
+const CODE_EXPIRY_MINUTES = 5; // 验证码有效期（分钟）
 
 // 用户数据文件路径
 const userDataFile = path.join(process.cwd(), 'data', 'user_data.json');
@@ -13,8 +17,13 @@ const phoneDataFile = path.join(process.cwd(), 'data', 'phone_data.json');
 
 class AuthMiddleware {
   constructor() {
+    // 确保JWT密钥已配置
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set. This is required for authentication.');
+    }
     this.jwtSecret = JWT_SECRET;
     this.jwtExpiresIn = JWT_EXPIRES_IN;
+    this.verificationCodes = verificationCodes;
   }
 
   /**
@@ -115,24 +124,77 @@ class AuthMiddleware {
   }
 
   /**
-   * 验证手机号和验证码（简化版）
+   * 生成验证码
+   * @returns {string} 6位数字验证码
+   */
+  generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  /**
+   * 保存验证码
+   * @param {string} phoneNumber - 手机号
+   * @returns {string} 生成的验证码
+   */
+  saveVerificationCode(phoneNumber) {
+    const code = this.generateVerificationCode();
+    const expireTime = Date.now() + CODE_EXPIRY_MINUTES * 60 * 1000;
+    
+    this.verificationCodes.set(phoneNumber, {
+      code,
+      expireTime,
+      createdAt: new Date().toISOString()
+    });
+    
+    // 记录日志但不包含验证码
+    console.log(`验证码已生成并保存，手机号: ${phoneNumber}, 有效期: ${CODE_EXPIRY_MINUTES}分钟`);
+    
+    return code;
+  }
+
+  /**
+   * 验证手机号和验证码
    * @param {string} phoneNumber - 手机号
    * @param {string} verificationCode - 验证码
    * @returns {Promise<boolean>} 验证结果
    */
   async verifyPhoneAndCode(phoneNumber, verificationCode) {
     try {
-      // 实际项目中应该从数据库或缓存中获取验证码
-      // 这里仅作示例，实际使用时需要实现真实的验证码验证逻辑
-      // 注：在真实场景中，验证码应该是加密存储的，并有过期时间
-      
-      // 简单的验证逻辑（实际应更复杂）
-      if (!phoneNumber || !verificationCode) {
+      // 参数验证
+      if (!phoneNumber || !verificationCode || typeof phoneNumber !== 'string' || typeof verificationCode !== 'string') {
         return false;
       }
 
-      // 模拟验证码验证，实际应用中应从数据库或缓存中获取
-      return verificationCode === '123456'; // 仅作示例，实际应用中应使用真实的验证码验证
+      // 获取存储的验证码信息
+      const codeInfo = this.verificationCodes.get(phoneNumber);
+      
+      if (!codeInfo) {
+        console.log(`未找到手机号 ${phoneNumber} 的验证码`);
+        return false;
+      }
+
+      // 检查验证码是否过期
+      const now = Date.now();
+      if (now > codeInfo.expireTime) {
+        console.log(`手机号 ${phoneNumber} 的验证码已过期`);
+        // 移除过期的验证码
+        this.verificationCodes.delete(phoneNumber);
+        return false;
+      }
+
+      // 验证验证码是否匹配
+      const isMatch = codeInfo.code === verificationCode;
+      
+      // 无论验证成功与否，都删除验证码（防止重复使用）
+      this.verificationCodes.delete(phoneNumber);
+      
+      if (isMatch) {
+        console.log(`手机号 ${phoneNumber} 验证成功`);
+      } else {
+        console.log(`手机号 ${phoneNumber} 验证码不匹配`);
+      }
+      
+      return isMatch;
     } catch (error) {
       console.error('验证码验证失败:', error);
       return false;
