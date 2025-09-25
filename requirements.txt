@@ -1,2 +1,11 @@
-akshare
-pandas
+akshare==1.8.142
+pandas==2.1.0
+numpy==1.25.2
+python-dateutil==2.8.2
+pytz==2023.3.post1
+six==1.16.0
+requests==2.31.0
+urllib3==2.0.4
+idna==3.4
+certifi==2023.7.22
+charset-normalizer==3.2.0

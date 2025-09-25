@@ -1,0 +1,48 @@
+# 依赖目录
+node_modules/
+*.pyc
+__pycache__/
+
+# 日志文件
+logs/
+*.log
+
+# 环境变量文件
+.env
+.env.local
+.env.production
+
+# 编辑器目录和文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*\~
+
+# Vercel 项目文件
+.vercel/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 构建输出
+build/
+dist/
+
+# 临时文件
+tmp/
+temp/
+
+# 测试覆盖报告
+coverage/
+.nyc_output/
+
+# 数据文件
+data/*.json
+data/*.csv
+
+# 敏感信息文件
+*.pem
+*.key
+*.cert

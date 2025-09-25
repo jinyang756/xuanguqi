@@ -1,11 +1,32 @@
 {
   "name": "stock-selector",
   "version": "1.0.0",
-  "description": "A股量化选股工具",
+  "description": "A股量化选股工具 - 基于多因子模型的量化选股系统",
   "private": true,
   "scripts": {
-    "build": "echo 'No build required for static site'"
+    "build": "echo 'No build required for static site'",
+    "dev": "python -m http.server 8080",
+    "test": "echo 'No tests configured'",
+    "clean": "call clean_workspace.bat",
+    "deploy": "vercel --prod",
+    "preview": "vercel"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "vercel": "^32.5.1"
+  },
+  "keywords": [
+    "stock",
+    "quantitative",
+    "selector",
+    "A股",
+    "investment",
+    "vercel",
+    "serverless"
+  ],
+  "engines": {
+    "node": "^16.0.0 || ^18.0.0",
+    "python": "^3.8.0"
+  }
 }

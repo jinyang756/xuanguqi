@@ -1,9 +1,10 @@
 // 用于导出CSV格式的用户数据
 
-const fs = require('fs');
+const userDataStorage = require('./user_data_storage');
+const fs = require('fs').promises;
 const path = require('path');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   try {
     // 设置允许跨域请求
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,11 +16,14 @@ module.exports = (req, res) => {
       return res.status(200).end();
     }
     
+    // 初始化数据存储
+    await userDataStorage.init();
+    
     // 读取用户数据文件
     const userDataPath = path.join(process.cwd(), 'data', 'user_data.json');
     
-    if (fs.existsSync(userDataPath)) {
-      const userData = JSON.parse(fs.readFileSync(userDataPath, 'utf8'));
+    try {
+      const userData = JSON.parse(await fs.readFile(userDataPath, 'utf8'));
       
       // 生成CSV内容
       const headers = ['姓名', '手机号', '提交时间'];
@@ -28,15 +32,16 @@ module.exports = (req, res) => {
       // 添加表头
       csvRows.push(headers.join(','));
       
-      // 添加数据行
-      userData.forEach(user => {
+      // 添加数据行（处理对象格式的数据）
+      for (const userId in userData) {
+        const user = userData[userId];
         const row = [
           `"${user.name || ''}"`, // 用双引号包裹，防止包含逗号的情况
-          user.phone_number || '',
-          user.timestamp || ''
+          user.phone || '',
+          user.createdAt || user.updatedAt || ''
         ];
         csvRows.push(row.join(','));
-      });
+      }
       
       // 合并所有行
       const csvContent = csvRows.join('\n');
@@ -47,11 +52,15 @@ module.exports = (req, res) => {
       
       // 返回CSV内容
       res.status(200).send(csvContent);
-    } else {
+    } catch (error) {
+      if (error.code === 'ENOENT') {
       res.status(404).json({
-        success: false,
-        message: '用户数据文件不存在'
-      });
+          success: false,
+          message: '用户数据文件不存在'
+        });
+      } else {
+        throw error;
+      }
     }
   } catch (error) {
     console.error('导出用户数据失败:', error);

@@ -35,11 +35,6 @@
 2. 确保项目根目录下存在 `requirements.txt` 文件，包含必要的依赖（如akshare、pandas等）
 3. Vercel会自动处理部署配置，无需额外设置
 
-### GitHub Pages部署（仅前端）
-
-1. 仅推送 `src` 目录内容到 gh-pages 分支
-2. 注意：GitHub Pages仅支持静态资源，不支持Serverless函数
-
 ## 推送与部署流程建议
 
 ### 推送到 GitHub 仓库

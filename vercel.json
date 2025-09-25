@@ -1,5 +1,6 @@
 {
   "name": "stock-selector",
+  "scope": "kims-projects-005a1207",
   "version": 2,
   "outputDirectory": "src",
   "builds": [
@@ -14,12 +15,20 @@
     {
       "src": "api/*.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/select.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "api/$1.js"
+    },
+    {
+      "src": "/api/select",
+      "dest": "api/select.py"
     },
     {
       "src": "/(.*)",
