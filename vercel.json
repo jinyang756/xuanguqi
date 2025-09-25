@@ -10,9 +10,17 @@
     {
       "src": "src/**/*.{js,css,png,jpg,jpeg,gif,svg,ttf}",
       "use": "@vercel/static"
+    },
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/$1.js"
+    },
     {
       "src": "/(.*)",
       "dest": "src/$1",
