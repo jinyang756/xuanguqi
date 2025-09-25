@@ -75,6 +75,45 @@ class SimpleStockSelector:
         range_val = max_val - min_val if max_val != min_val else 1
         return [(v - min_val) / range_val for v in values]
     
+    def validate_params(self, params):
+        """验证选股参数"""
+        if not isinstance(params, dict):
+            return False, "参数必须是字典格式"
+            
+        # 验证日期格式
+        if 'start_date' in params and params['start_date']:
+            if not isinstance(params['start_date'], str) or len(params['start_date']) != 8:
+                return False, "开始日期格式不正确，应为YYYYMMDD格式"
+        
+        if 'end_date' in params and params['end_date']:
+            if not isinstance(params['end_date'], str) or len(params['end_date']) != 8:
+                return False, "结束日期格式不正确，应为YYYYMMDD格式"
+        
+        # 验证数值参数
+        numeric_params = [
+            'price_min', 'price_max', 'market_cap_min', 'market_cap_max',
+            'volume_min', 'volume_max', 'turnover_rate_min', 'turnover_rate_max',
+            'pe_min', 'pe_max', 'pb_min', 'pb_max', 'roe_min', 'roe_max'
+        ]
+        
+        for param in numeric_params:
+            if param in params and params[param] is not None:
+                try:
+                    float_value = float(params[param])
+                    if float_value < 0:
+                        return False, f"{param}不能为负数"
+                except (ValueError, TypeError):
+                    return False, f"{param}必须是有效数字"
+        
+        # 验证布尔参数
+        boolean_params = ['use_breakout_strategy', 'use_volume_strategy']
+        for param in boolean_params:
+            if param in params and params[param] is not None:
+                if not isinstance(params[param], bool):
+                    return False, f"{param}必须是布尔值"
+        
+        return True, "验证通过"
+
     # 基于短期上涨潜力选出单只股票
     def select_stock_for_short_term_growth(self, stock_data):
         # 筛选出信息齐全的股票

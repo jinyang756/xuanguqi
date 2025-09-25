@@ -1,38 +1,44 @@
 // 应用配置文件
 // 用于控制应用行为，例如使用虚拟数据还是真实数据
+
+// 从环境变量中读取配置，或使用默认值
+function getEnv(key, defaultValue) {
+    return process.env[key] !== undefined ? process.env[key] : defaultValue;
+}
+
 const appConfig = {
     // 数据来源配置
     dataSource: {
         // 设置为 true 时使用本地虚拟数据，设置为 false 时使用真实 API 数据
-        useMockData: true,
+        useMockData: getEnv('USE_MOCK_DATA', 'true') === 'true',
         
         // 虚拟数据文件路径
-        mockDataFile: 'data/processed/stock_data_strategy_test.json',
+        mockDataFile: getEnv('MOCK_DATA_FILE', 'data/processed/stock_data_strategy_test.json'),
         
         // 真实 API 配置（当 useMockData 为 false 时生效）
         apiConfig: {
             // Tushare API 相关配置
             tushare: {
-                apiKey: '', // 在使用真实数据时需要填写
-                retryTimes: 3,
-                timeout: 10000
+                apiKey: getEnv('TUSHARE_API_KEY', ''), // 从环境变量中读取
+                retryTimes: parseInt(getEnv('TUSHARE_RETRY_TIMES', '3')),
+                timeout: parseInt(getEnv('TUSHARE_TIMEOUT', '10000'))
             }
         }
     },
     
     // 缓存配置
     cache: {
-        enabled: true,
-        expireTime: 24 * 60 * 60 * 1000, // 缓存过期时间，单位毫秒（默认24小时）
-        storageKey: 'stock_data_cache'
+        enabled: getEnv('CACHE_ENABLED', 'true') === 'true',
+        expireTime: parseInt(getEnv('CACHE_EXPIRE_TIME', '86400000')), // 缓存过期时间，单位毫秒
+        storageKey: getEnv('CACHE_STORAGE_KEY', 'stock_data_cache')
     },
     
     // 超级管理员配置
     superAdmin: {
         // 超级管理员电话号码列表，这些号码可以无限制使用选股器功能
-        phoneNumbers: ['18066668888'],
+        phoneNumbers: getEnv('SUPER_ADMIN_PHONES', '18066668888').split(','),
         // 超级管理员无使用限制
-        unlimitedUsage: true
+        unlimitedUsage: getEnv('SUPER_ADMIN_UNLIMITED', 'true') === 'true'
     },
     
     // 选股算法配置
@@ -65,10 +71,10 @@ const appConfig = {
     }
 };
 
-// 导出配置对象
-export default appConfig;
+// 导出配置对象 - 使用 CommonJS 模块系统
+module.exports = appConfig;
 
-// 为了兼容不支持 ES6 模块的环境，同时挂载到 window 对象
+// 在浏览器环境下也挂载到 window 对象
 if (typeof window !== 'undefined') {
     window.appConfig = appConfig;
 }
